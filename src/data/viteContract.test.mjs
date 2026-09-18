@@ -55,3 +55,11 @@ test('Meadow creatures have deterministic ambient walking motion', () => {
   assert.match(scenes, /Math\.cos\(a\)\*m\.radius/)
   assert.match(scenes, /Math\.atan2\(dx,dz\)/)
 })
+
+
+test('app renders the canonical 15-creature generated sheet', () => {
+  const app = read('src/app.jsx')
+  assert.match(app, /dinova-creatures-15\.webp/)
+  assert.match(app, /function CreatureArt/)
+  assert.match(app, /melt-creature-art/)
+})

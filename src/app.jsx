@@ -6,14 +6,22 @@ import {
   saveGameState, selectCreature, setDuration, setPreviewProgress, startSession,
 } from './store/gameStore.mjs'
 
-const ASSETS = {
-  brachiosaurus: '/assets/brachiosaurus-master.webp',
-  triceratops: '/assets/triceratops.webp',
-  stegosaurus: '/assets/stegosaurus.webp',
-  'tyrannosaurus-rex': '/assets/tyrannosaurus-rex.webp',
-  ankylosaurus: '/assets/ankylosaurus.webp',
-}
+const ASSET_SHEET = '/assets/dinova-creatures-15.webp'
 
+function CreatureArt({ creature, className = '', locked = false }) {
+  const index = creature?.spriteIndex ?? 0
+  const col = index % 3
+  const row = Math.floor(index / 3)
+  return <span
+    className={`creature-art ${className} ${locked ? 'is-locked' : ''}`}
+    role="img"
+    aria-label={creature?.name || 'DINOVA creature'}
+    style={{
+      backgroundImage: `url("${ASSET_SHEET}")`,
+      backgroundPosition: `${col * 50}% ${row * 25}%`,
+    }}
+  />
+}
 const NAV = [
   ['meltime', '◷', 'MelTime'],
   ['collection', '▤', 'Collection'],
@@ -64,9 +72,11 @@ class MeltVisual extends React.Component {
     }).catch(() => this.setState({ fallback: true }))
   }
   render() {
+    const creature = CREATURE_BY_ID[this.props.creatureId] || CREATURES[0]
     return <div className="visual-stack">
-      <canvas ref={this.canvas} className="three-canvas melt-canvas" aria-label={`3D frozen ${this.props.creatureId} revival scene`} />
-      {this.state.fallback && <img className="fallback-creature" src={this.props.fallbackSrc || ASSETS.brachiosaurus} alt={`${this.props.creatureId} visual fallback`} />}
+      <CreatureArt creature={creature} className="melt-creature-art" />
+      <canvas ref={this.canvas} className="three-canvas melt-canvas" aria-label={`얼음 속 ${creature.name} 해빙 효과`} />
+      {this.state.fallback && <div className="ice-fallback" />}
     </div>
   }
 }
@@ -122,7 +132,7 @@ class MelTimeScreen extends React.Component {
     return <section className="screen meltime-screen">
       <BrandHeader title="MelTime" subtitle="집중한 시간만큼 얼음을 녹이고, 생명체를 깨웁니다." right={<span className="day-chip">DAY 01</span>} />
       <div className="revival-stage">
-        <MeltVisual progress={melt} creatureId={creature.id} fallbackSrc={ASSETS[creature.id] || ASSETS.brachiosaurus} />
+        <MeltVisual progress={melt} creatureId={creature.id} />
         <div className="creature-tag"><span>{creature.koName}</span><strong>{creature.name}</strong></div>
         <div className="stage-badge">{visualMeltStage(melt).replace('-', ' ')}</div>
       </div>
@@ -155,9 +165,8 @@ function CollectionScreen({ game, update, goMelTime }) {
     <div className="collection-grid">{CREATURES.map(creature => {
       const p = progressForFocusedMinutes(game.progress[creature.id] || 0, creature.requiredMinutes)
       const revived = game.revivedIds.includes(creature.id)
-      const asset = ASSETS[creature.id]
       return <button key={creature.id} className={`collection-card ${game.activeCreatureId===creature.id?'selected-creature':''}`} onClick={() => choose(creature.id)}>
-        <div className={`asset-box ${!revived && p === 0 ? 'locked' : ''}`}>{asset ? <img src={asset} alt={creature.name} loading="lazy"/> : <div className="silhouette-shape">{creature.name[0]}</div>}{revived && <span className="revived-mark">✓</span>}{!revived && p===0 && <span className="lock-mark">◇</span>}</div>
+        <div className="asset-box"><div className="ice-card-shape" /><CreatureArt creature={creature} locked={!revived && p === 0} />{revived && <span className="revived-mark">✓</span>}{!revived && p===0 && <span className="lock-mark">◇</span>}</div>
         <div className="collection-copy"><strong>{p>0 || revived ? creature.name : '???'}</strong><span>{revived ? 'Revived' : p>0 ? `${Math.round(p*100)}% awake` : creature.rarity}</span></div>
         {p>0 && !revived && <div className="mini-progress"><i style={{width:percent(p)}} /></div>}
       </button>
@@ -187,7 +196,7 @@ function ProfileScreen({ game }) {
   const stats = [['Total focus',`${game.totalFocusMinutes}m`,'◷'],['Sessions',game.completedSessions,'▶'],['Revived',`${game.revivedIds.length}/${CREATURES.length}`,'◇'],['Current streak',`${game.streakDays}d`,'⌁'],['Longest focus',`${game.completedSessions ? game.selectedDurationMinutes : 0}m`,'△'],['Maps unlocked','1/5','▱']]
   return <section className="screen profile-screen">
     <BrandHeader title="Explorer" subtitle="오늘도, 조금 더 멋진 세계를 위해." right={<button className="settings-button">⚙</button>} />
-    <div className="profile-hero"><div className="avatar-ring"><img src={ASSETS[game.activeCreatureId] || ASSETS.brachiosaurus} alt={`${CREATURE_BY_ID[game.activeCreatureId]?.name || 'Brachiosaurus'} companion`}/></div><div><span>DINOVA EXPLORER</span><strong>Focus Keeper</strong><p>Focus today. Revive the past.</p></div></div>
+    <div className="profile-hero"><div className="avatar-ring"><CreatureArt creature={CREATURE_BY_ID[game.activeCreatureId] || CREATURES[0]} /></div><div><span>DINOVA EXPLORER</span><strong>Focus Keeper</strong><p>Focus today. Revive the past.</p></div></div>
     <div className="stats-grid">{stats.map(([label,value,icon]) => <div className="stat-card" key={label}><span className="stat-icon">{icon}</span><div><small>{label}</small><strong>{value}</strong></div></div>)}</div>
     <div className="achievement-card"><div className="card-title-row"><strong>Achievements</strong><span>0 / 8</span></div><div className="badges"><div>◷<span>First Focus</span></div><div>◇<span>First Revival</span></div><div>△<span>Deep Focus</span></div><div>▱<span>Explorer</span></div></div></div>
     <blockquote>“집중한 시간은 사라지지 않습니다. 이 세계의 한 조각이 됩니다.”</blockquote>
@@ -213,7 +222,7 @@ export default class App extends React.Component {
       </div>
       <aside className="desktop-story">
         <span className="story-kicker">FOCUS · MELT · REVIVE</span><h2>집중한 시간으로<br/>살아있는 세계를 만듭니다.</h2><p>첨부한 브라키오사우루스를 Master Art Direction으로 고정해 민트 로우폴리, 아이보리 배, 검은 점눈, 차분한 미소를 전체 캐릭터에 적용합니다.</p>
-        <div className="story-creature"><img src="/assets/brachiosaurus-master.webp" alt="DINOVA master Brachiosaurus"/></div>
+        <div className="story-creature"><CreatureArt creature={CREATURES[0]} /></div>
         <div className="story-note"><b>Master art direction</b><span>Mint low-poly · Ivory belly · Dot eyes · Calm smile</span></div>
       </aside>
     </main>
