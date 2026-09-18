@@ -387,3 +387,11 @@ button{cursor:pointer}
 .map-creature-pop{top:58px;right:11px}.map-creature-pop small{font-size:7px;color:#90a0a4}
 .immersive-map-screen>.map-tabs{display:none}
 @media(max-width:900px){.dino-park-stage{height:calc(100dvh - 205px);min-height:500px}.immersive-map-screen .screen-header{margin-bottom:9px}.immersive-map-screen .map-info-card{display:none}}
+
+/* Product loop polish */
+.focus-history-card{margin-top:10px;padding:14px;border-radius:19px;background:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.95);box-shadow:0 7px 22px rgba(61,92,94,.06)}
+.focus-history-bars{height:92px;display:grid;grid-template-columns:repeat(7,1fr);align-items:end;gap:6px;margin-top:10px;padding:0 2px}
+.focus-history-bars>div{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
+.focus-history-bars i{display:block;width:100%;max-width:18px;min-height:12px;border-radius:999px 999px 5px 5px;background:linear-gradient(180deg,#78d4c0,#a9e5d6)}
+.focus-history-bars span{font-size:6px;color:#899ba1}
+.history-empty{margin:12px 0 1px;font-size:8px;color:#87999f;text-align:center}

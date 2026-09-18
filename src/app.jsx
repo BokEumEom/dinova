@@ -132,7 +132,6 @@ class MelTimeScreen extends React.Component {
   componentDidUpdate(prev) {
     if (prev.game.session.status !== this.props.game.session.status) this.syncTimer()
     this.syncDocumentTitle()
-    if (this.props.game.session.status === 'running' && this.remaining() <= 0) this.props.update(s => completeSession(s, Date.now()))
   }
   componentWillUnmount() {
     clearInterval(this.timer)
@@ -307,7 +306,7 @@ function ProfileScreen({ game, update }) {
     ['완료 세션',game.completedSessions,'▶'],
     ['부활한 친구',`${game.revivedIds.length}/${CREATURES.length}`,'◇'],
     ['연속 집중',`${game.streakDays}일`,'⌁'],
-    ['최장 집중',`${game.completedSessions ? game.selectedDurationMinutes : 0}m`,'△'],
+    ['최장 집중',`${game.longestFocusMinutes || 0}m`,'△'],
     ['방문한 지역',`${new Set(game.revivedIds.map(mapAreaForCreature)).size || 0}/${MAP_AREAS.length}`,'▱'],
   ]
   const badges = [
@@ -325,6 +324,12 @@ function ProfileScreen({ game, update }) {
     <BrandHeader title="나의 기록" subtitle="작은 시간이 모여, 잊혔던 세계를 다시 푸르게." right={<button className="settings-button" aria-label="설정" onClick={()=>setSettingsOpen(true)}>⚙</button>} />
     <div className="profile-hero"><div className="avatar-ring"><CreatureArt creature={active} /></div><div><span>MY COMPANION</span><strong>{active.koName}</strong><p>{active.name}</p></div></div>
     <div className="stats-grid">{stats.map(([label,value,icon]) => <div className="stat-card" key={label}><span className="stat-icon">{icon}</span><div><small>{label}</small><strong>{value}</strong></div></div>)}</div>
+    <div className="focus-history-card">
+      <div className="card-title-row"><strong>최근 집중</strong><span>{game.recentSessions?.length || 0} sessions</span></div>
+      {(game.recentSessions?.length || 0) > 0
+        ? <div className="focus-history-bars">{game.recentSessions.slice(0,7).reverse().map((session,index)=><div key={`${session.endedAt}-${index}`}><i style={{height:`${Math.max(22,Math.min(100,session.durationMinutes/60*100))}%`}}/><span>{session.durationMinutes}m</span></div>)}</div>
+        : <p className="history-empty">첫 집중을 완료하면 여기에 기록이 쌓여요.</p>}
+    </div>
     <div className="achievement-card"><div className="card-title-row"><strong>나의 배지</strong><span>{badges.filter(([, , earned]) => earned).length} / {badges.length}</span></div><div className="badges">{badges.map(([icon,label,earned]) => <div key={label} className={earned ? 'earned' : ''}>{icon}<span>{label}</span></div>)}</div></div>
     <blockquote>“좋은 집중이, 더 많은 친구를 깨어나게 해요.”</blockquote>
     {settingsOpen && <div className="detail-backdrop" onClick={()=>{setSettingsOpen(false);setConfirmReset(false)}}>
@@ -340,7 +345,25 @@ function ProfileScreen({ game, update }) {
 }
 
 export default class App extends React.Component {
-  constructor(props) { super(props); this.state = { tab:'meltime', game:loadGameState(), celebration:null } }
+  constructor(props) { super(props); this.state = { tab:'meltime', game:loadGameState(), celebration:null }; this.sessionWatcher=null }
+  componentDidMount() { this.syncSessionWatcher(); this.finishExpiredSession() }
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.game.session.status !== this.state.game.session.status) this.syncSessionWatcher()
+  }
+  componentWillUnmount() { clearInterval(this.sessionWatcher) }
+  remainingFor(game, now=Date.now()) {
+    const s=game.session
+    if (s.status==='idle' || s.startedAt == null) return game.selectedDurationMinutes*60000
+    return calculateRemainingMs({durationMs:s.durationMinutes*60000,startedAt:s.startedAt,now:s.status==='paused'?s.pausedAt:now,pausedDurationMs:s.pausedDurationMs})
+  }
+  syncSessionWatcher() {
+    clearInterval(this.sessionWatcher)
+    if (this.state.game.session.status==='running') this.sessionWatcher=setInterval(this.finishExpiredSession,500)
+  }
+  finishExpiredSession = () => {
+    const game=this.state.game
+    if (game.session.status==='running' && this.remainingFor(game)<=0) this.update(state=>completeSession(state,Date.now()))
+  }
   update = (transform) => this.setState(prev => {
     const next = transform(prev.game)
     saveGameState(next)
