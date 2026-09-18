@@ -360,3 +360,11 @@ button{cursor:pointer}
 .sheet-close{position:absolute;right:16px;top:14px;border:0;background:#eaf4f4;width:30px;height:30px;border-radius:50%;font-size:18px;color:#6f858d;z-index:3}
 .sheet-creature{width:76%;margin:0 auto}.sheet-kicker{font-size:8px;letter-spacing:.12em;color:#58aa9a}.creature-sheet h2{font-size:23px;margin:3px 0 0}.creature-sheet>p{font-size:10px;color:#80949c;margin:2px 0 12px}
 .sheet-progress{display:flex;justify-content:space-between;font-size:9px}.primary-cta{width:100%;border:0;border-radius:16px;background:#63c7b1;color:#fff;padding:13px;margin-top:10px;font-weight:700}
+
+/* MVP completion states */
+.map-empty-state{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:4;width:72%;padding:18px 16px;text-align:center;border-radius:20px;background:rgba(255,255,255,.76);backdrop-filter:blur(14px);box-shadow:0 10px 28px rgba(53,88,88,.1)}
+.map-empty-state>span{display:grid;place-items:center;width:38px;height:38px;margin:0 auto 8px;border-radius:50%;background:#e0f5ee;color:#55a997;font-size:18px}.map-empty-state strong{display:block;font-size:12px}.map-empty-state p{font-size:8px;line-height:1.55;color:#7c929a;margin:5px 0 0}
+.badges div.earned{background:#ddf5ed;color:#52a795}
+.revival-celebration{position:absolute;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(47,68,76,.28);backdrop-filter:blur(8px)}
+.celebration-card{width:100%;padding:22px 22px 18px;border-radius:28px;background:linear-gradient(180deg,#fbffff,#edf9f7);box-shadow:0 24px 65px rgba(42,73,77,.2);text-align:center}
+.celebration-kicker{font-size:8px;font-weight:700;letter-spacing:.2em;color:#56ac9b}.celebration-creature{width:82%;margin:2px auto -8px}.celebration-card h2{font-size:23px;margin:0}.celebration-card p{font-size:10px;line-height:1.6;color:#789099;margin:5px 0 13px}.celebration-close{border:0;background:none;color:#718a92;font-size:9px;margin-top:9px}

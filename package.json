@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test src/**/*.test.mjs",
-    "check": "node --check src/domain/focus.mjs && node --check src/store/gameStore.mjs && node --check src/data/modelAssets.mjs && node --check src/three/modelLoader.js && node --check src/three/scenes.js"
+    "check": "node --check src/domain/focus.mjs && node --check src/store/gameStore.mjs && node --check src/data/modelAssets.mjs && node --check src/three/modelLoader.js && node --check src/three/scenes.js",
+    "prebuild": "npm test && npm run check"
   },
   "dependencies": {
     "react": "^19.1.1",

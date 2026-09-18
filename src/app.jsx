@@ -207,6 +207,7 @@ class MapScreen extends React.Component {
       <div className="map-tabs"><button className="active">Sunny Plains</button><button disabled>Snowy Ridge</button><button disabled>Ancient Forest</button></div>
       <div className="map-stage">
         <MapVisual revivedIds={game.revivedIds} revivedKey={game.revivedIds.join('|')} onCreatureClick={id => this.setState({selected:id})} />
+        {game.revivedIds.length === 0 && <div className="map-empty-state"><span>◇</span><strong>아직 깨어난 친구가 없어요</strong><p>MelTime에서 첫 친구를 부활시키면 이 초원에 나타납니다.</p></div>}
         <div className="map-hud"><span>DRAG TO EXPLORE</span><span>PINCH / WHEEL TO ZOOM</span></div>
         {selected && <div className="map-creature-pop"><span>Habitat resident</span><strong>{selected.name}</strong><button onClick={() => update(s=>selectCreature(s,selected.id))}>집중 대상으로 선택</button></div>}
       </div>
@@ -216,39 +217,68 @@ class MapScreen extends React.Component {
 }
 
 function ProfileScreen({ game }) {
-  const stats = [['총 집중 시간',`${game.totalFocusMinutes}m`,'◷'],['완료 세션',game.completedSessions,'▶'],['부활한 친구',`${game.revivedIds.length}/${CREATURES.length}`,'◇'],['연속 집중',`${game.streakDays}일`,'⌁'],['최장 집중',`${game.completedSessions ? game.selectedDurationMinutes : 0}m`,'△'],['방문한 지역','1/5','▱']]
+  const active = CREATURE_BY_ID[game.activeCreatureId] || CREATURES[0]
+  const stats = [
+    ['총 집중 시간',`${game.totalFocusMinutes}m`,'◷'],
+    ['완료 세션',game.completedSessions,'▶'],
+    ['부활한 친구',`${game.revivedIds.length}/${CREATURES.length}`,'◇'],
+    ['연속 집중',`${game.streakDays}일`,'⌁'],
+    ['최장 집중',`${game.completedSessions ? game.selectedDurationMinutes : 0}m`,'△'],
+    ['방문한 지역','1/5','▱'],
+  ]
+  const badges = [
+    ['◷','첫 집중',game.completedSessions > 0],
+    ['◇','첫 부활',game.revivedIds.length > 0],
+    ['△','1시간 집중',game.totalFocusMinutes >= 60],
+    ['▱','탐험가',game.revivedIds.length >= 3],
+  ]
   return <section className="screen profile-screen">
     <BrandHeader title="나의 기록" subtitle="작은 시간이 모여, 잊혔던 세계를 다시 푸르게." right={<button className="settings-button">⚙</button>} />
-    <div className="profile-hero"><div className="avatar-ring"><CreatureArt creature={CREATURE_BY_ID[game.activeCreatureId] || CREATURES[0]} /></div><div><span>MY COMPANION</span><strong>{CREATURE_BY_ID[game.activeCreatureId]?.koName}</strong><p>{CREATURE_BY_ID[game.activeCreatureId]?.name}</p></div></div>
+    <div className="profile-hero"><div className="avatar-ring"><CreatureArt creature={active} /></div><div><span>MY COMPANION</span><strong>{active.koName}</strong><p>{active.name}</p></div></div>
     <div className="stats-grid">{stats.map(([label,value,icon]) => <div className="stat-card" key={label}><span className="stat-icon">{icon}</span><div><small>{label}</small><strong>{value}</strong></div></div>)}</div>
-    <div className="achievement-card"><div className="card-title-row"><strong>나의 배지</strong><span>0 / 8</span></div><div className="badges"><div>◷<span>첫 집중</span></div><div>◇<span>첫 부활</span></div><div>△<span>깊은 집중</span></div><div>▱<span>탐험가</span></div></div></div>
-    <blockquote>“집중한 시간은 사라지지 않습니다. 이 세계의 한 조각이 됩니다.”</blockquote>
+    <div className="achievement-card"><div className="card-title-row"><strong>나의 배지</strong><span>{badges.filter(([, , earned]) => earned).length} / {badges.length}</span></div><div className="badges">{badges.map(([icon,label,earned]) => <div key={label} className={earned ? 'earned' : ''}>{icon}<span>{label}</span></div>)}</div></div>
+    <blockquote>“좋은 집중이, 더 많은 친구를 깨어나게 해요.”</blockquote>
   </section>
 }
 
 export default class App extends React.Component {
-  constructor(props) { super(props); this.state = { tab:'meltime', game: loadGameState() } }
-  update = (transform) => this.setState(prev => { const next = transform(prev.game); saveGameState(next); return { game: next } })
+  constructor(props) { super(props); this.state = { tab:'meltime', game:loadGameState(), celebration:null } }
+  update = (transform) => this.setState(prev => {
+    const next = transform(prev.game)
+    saveGameState(next)
+    const newRevived = next.revivedIds.find(id => !prev.game.revivedIds.includes(id))
+    return { game:next, celebration:newRevived || prev.celebration }
+  })
   render() {
-    const { tab, game } = this.state
+    const { tab, game, celebration } = this.state
+    const celebratedCreature = celebration ? CREATURE_BY_ID[celebration] : null
     return <main className="app-shell">
       <div className="ambient-orb orb-one"/><div className="ambient-orb orb-two"/>
       <div className={`app-frame theme-${tab}`}>
         <div className="status-bar"><span className="brand-script">Dinova</span><span className="status-icons">● ◔ ▰</span></div>
         <div className="screen-scroll">
-          {tab==='meltime' && <MelTimeScreen game={game} update={this.update}/>} 
-          {tab==='collection' && <CollectionScreen game={game} update={this.update} goMelTime={()=>this.setState({tab:'meltime'})}/>} 
-          {tab==='map' && <MapScreen game={game} update={this.update}/>} 
-          {tab==='profile' && <ProfileScreen game={game}/>} 
+          {tab==='meltime' && <MelTimeScreen game={game} update={this.update}/>}
+          {tab==='collection' && <CollectionScreen game={game} update={this.update} goMelTime={()=>this.setState({tab:'meltime'})}/>}
+          {tab==='map' && <MapScreen game={game} update={this.update}/>}
+          {tab==='profile' && <ProfileScreen game={game}/>}
         </div>
         <BottomNav tab={tab} onTab={tab => this.setState({tab})}/>
+        {celebratedCreature && <div className="revival-celebration">
+          <div className="celebration-card">
+            <span className="celebration-kicker">REVIVAL COMPLETE</span>
+            <CreatureArt creature={celebratedCreature} className="celebration-creature" />
+            <h2>{celebratedCreature.koName}</h2>
+            <p>{celebratedCreature.name}가 깨어났어요.<br/>이제 3D 초원에서 만날 수 있습니다.</p>
+            <button className="primary-cta" onClick={() => this.setState({tab:'map', celebration:null})}>지도에서 만나기</button>
+            <button className="celebration-close" onClick={() => this.setState({celebration:null})}>계속 집중하기</button>
+          </div>
+        </div>}
       </div>
       <aside className="desktop-story">
-        <span className="story-kicker">FOCUS · MELT · REVIVE</span><h2>집중한 시간으로<br/>살아있는 세계를 만듭니다.</h2><p>첨부한 브라키오사우루스를 Master Art Direction으로 고정해 민트 로우폴리, 아이보리 배, 검은 점눈, 차분한 미소를 전체 캐릭터에 적용합니다.</p>
+        <span className="story-kicker">FOCUS · MELT · REVIVE</span><h2>집중한 시간으로<br/>살아있는 세계를 만듭니다.</h2><p>15종의 민트 로우폴리 공룡 에셋과 3D 서식지가 하나의 집중 루프로 연결됩니다.</p>
         <div className="story-creature"><CreatureArt creature={CREATURES[0]} /></div>
         <div className="story-note"><b>Master art direction</b><span>Mint low-poly · Ivory belly · Dot eyes · Calm smile</span></div>
       </aside>
     </main>
   }
 }
-
