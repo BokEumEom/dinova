@@ -46,7 +46,7 @@ test('selected creature is forwarded into the melt scene', () => {
   const scenes = read('src/three/scenes.js')
   assert.match(app, /MeltVisual progress=\{melt\} creatureId=\{creature\.id\}/)
   assert.match(scenes, /createMeltScene\(canvas,progress=0,creatureId='brachiosaurus'\)/)
-  assert.match(app, /CreatureArt creature=\{creature\} className="melt-creature-art"/)
+  assert.match(scenes, /const creature=loadOrFallback\(creatureId,3\.25\)/)
 })
 
 test('Meadow creatures have deterministic ambient walking motion', () => {
@@ -105,4 +105,11 @@ test('App owns global wake lock and timer title across tabs', () => {
   assert.match(app, /class App extends React\.Component[\s\S]*?syncWakeLock\(\)/)
   assert.match(app, /updateDocumentTitle\(\)/)
   assert.match(app, /navigator\.wakeLock\.request\('screen'\)/)
+})
+
+
+test('MelTime scene uses the same 3D creature factory as the map', () => {
+  const scenes=read('src/three/scenes.js')
+  assert.match(scenes, /loadOrFallback\(creatureId,3\.25\)/)
+  assert.match(scenes, /fitCreatureModel\(createCreature\(id\),height\)/)
 })

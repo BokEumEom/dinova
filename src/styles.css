@@ -399,3 +399,7 @@ button{cursor:pointer}
 /* Next revival guidance */
 .revived-next{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .revived-next small{color:#708890}.revived-next button{border:0;border-radius:999px;padding:6px 9px;background:#ddf4eb;color:#367f72;font-size:7px;font-weight:700;white-space:nowrap}
+
+/* MelTime now uses the same 3D creature language as the park */
+.melt-canvas{position:absolute;inset:0;z-index:2}
+.melt-creature-art{z-index:1}

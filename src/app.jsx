@@ -95,9 +95,8 @@ class MeltVisual extends React.Component {
   render() {
     const creature = CREATURE_BY_ID[this.props.creatureId] || CREATURES[0]
     return <div className="visual-stack">
-      <CreatureArt creature={creature} className="melt-creature-art" />
-      <canvas ref={this.canvas} className="three-canvas melt-canvas" aria-label={`얼음 속 ${creature.name} 해빙 효과`} />
-      {this.state.fallback && <div className="ice-fallback" />}
+      <canvas ref={this.canvas} className="three-canvas melt-canvas" aria-label={`얼음 속 3D ${creature.name} 해빙 효과`} />
+      {this.state.fallback && <><CreatureArt creature={creature} className="melt-creature-art" /><div className="ice-fallback" /></>}
     </div>
   }
 }
