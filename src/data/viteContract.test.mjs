@@ -39,3 +39,19 @@ test('MeltVisual keeps a canvas ref and MelTimeScreen initializes its clock', ()
   assert.match(app, /class MeltVisual extends React\.Component[\s\S]*?this\.canvas = React\.createRef\(\)/)
   assert.match(app, /class MelTimeScreen extends React\.Component[\s\S]*?this\.state = \{ now: Date\.now\(\) \}/)
 })
+
+
+test('selected creature is forwarded into the melt scene', () => {
+  const app = read('src/app.jsx')
+  const scenes = read('src/three/scenes.js')
+  assert.match(app, /MeltVisual progress=\{melt\} creatureId=\{creature\.id\}/)
+  assert.match(scenes, /createMeltScene\(canvas,progress=0,creatureId='brachiosaurus'\)/)
+  assert.match(scenes, /loadOrFallback\(creatureId,/)
+})
+
+test('Meadow creatures have deterministic ambient walking motion', () => {
+  const scenes = read('src/three/scenes.js')
+  assert.match(scenes, /userData\.motion=\{homeX:/)
+  assert.match(scenes, /Math\.cos\(a\)\*m\.radius/)
+  assert.match(scenes, /Math\.atan2\(dx,dz\)/)
+})

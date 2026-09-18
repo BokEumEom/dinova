@@ -43,17 +43,26 @@ function BottomNav({ tab, onTab }) {
 
 class MeltVisual extends React.Component {
   constructor(props) { super(props); this.canvas = React.createRef(); this.controller = null; this.state = { fallback: false } }
-  componentDidMount() {
+  componentDidMount() { this.mountScene() }
+  componentDidUpdate(prev) {
+    if (prev.creatureId !== this.props.creatureId) {
+      this.controller?.destroy()
+      this.mountScene()
+    } else if (prev.progress !== this.props.progress) {
+      this.controller?.setProgress(this.props.progress)
+    }
+  }
+  componentWillUnmount() { this.controller?.destroy() }
+  mountScene() {
+    this.setState({ fallback: false })
     import('./three/scenes.js').then(({ createMeltScene }) => {
-      this.controller = createMeltScene(this.canvas.current, this.props.progress)
+      this.controller = createMeltScene(this.canvas.current, this.props.progress, this.props.creatureId)
     }).catch(() => this.setState({ fallback: true }))
   }
-  componentDidUpdate(prev) { if (prev.progress !== this.props.progress) this.controller?.setProgress(this.props.progress) }
-  componentWillUnmount() { this.controller?.destroy() }
   render() {
     return <div className="visual-stack">
-      <canvas ref={this.canvas} className="three-canvas melt-canvas" aria-label="3D frozen dinosaur revival scene" />
-      {this.state.fallback && <img className="fallback-creature" src="/assets/brachiosaurus-master.webp" alt="Brachiosaurus visual fallback" />}
+      <canvas ref={this.canvas} className="three-canvas melt-canvas" aria-label={`3D frozen ${this.props.creatureId} revival scene`} />
+      {this.state.fallback && <img className="fallback-creature" src={this.props.fallbackSrc || ASSETS.brachiosaurus} alt={`${this.props.creatureId} visual fallback`} />}
     </div>
   }
 }
@@ -109,7 +118,7 @@ class MelTimeScreen extends React.Component {
     return <section className="screen meltime-screen">
       <BrandHeader title="MelTime" subtitle="집중한 시간만큼 얼음을 녹이고, 생명체를 깨웁니다." right={<span className="day-chip">DAY 01</span>} />
       <div className="revival-stage">
-        <MeltVisual progress={melt} />
+        <MeltVisual progress={melt} creatureId={creature.id} fallbackSrc={ASSETS[creature.id] || ASSETS.brachiosaurus} />
         <div className="creature-tag"><span>{creature.koName}</span><strong>{creature.name}</strong></div>
         <div className="stage-badge">{visualMeltStage(melt).replace('-', ' ')}</div>
       </div>
