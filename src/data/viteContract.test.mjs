@@ -25,3 +25,10 @@ test('index boots Vite React entrypoint without CDN import maps or UMD globals',
   assert.doesNotMatch(html, /react\.production\.min\.js/)
   assert.doesNotMatch(html, /esm\.sh|jsdelivr|unpkg/)
 })
+
+
+test('MelTimeScreen is declared exactly once so Vite can transform app.jsx', () => {
+  const app = read('src/app.jsx')
+  const matches = app.match(/class MelTimeScreen extends React\.Component/g) ?? []
+  assert.equal(matches.length, 1)
+})

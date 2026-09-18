@@ -42,7 +42,7 @@ function BottomNav({ tab, onTab }) {
 }
 
 class MeltVisual extends React.Component {
-  constructor(props) { super(props); this.canvas = React.createRef(); this.controller = null; this.state = { fallback: false } }
+  constructor(props) { super(props); this.state = { now: Date.now() }; this.timer = null }
   componentDidMount() {
     import('./three/scenes.js').then(({ createMeltScene }) => {
       this.controller = createMeltScene(this.canvas.current, this.props.progress)
@@ -59,24 +59,6 @@ class MeltVisual extends React.Component {
 }
 
 class MapVisual extends React.Component {
-  constructor(props) { super(props); this.canvas = React.createRef(); this.controller = null; this.state = { fallback: false } }
-  componentDidMount() { this.mountScene() }
-  componentDidUpdate(prev) { if (prev.revivedKey !== this.props.revivedKey) { this.controller?.destroy(); this.mountScene() } }
-  componentWillUnmount() { this.controller?.destroy() }
-  mountScene() {
-    import('./three/scenes.js').then(({ createMeadowScene }) => {
-      this.controller = createMeadowScene(this.canvas.current, this.props.revivedIds, this.props.onCreatureClick)
-    }).catch(() => this.setState({ fallback: true }))
-  }
-  render() {
-    return <div className="visual-stack map-fallback-bg">
-      <canvas ref={this.canvas} className="three-canvas map-canvas" aria-label="Interactive 3D meadow map" />
-      {this.state.fallback && <div className="offline-map-fallback"><img src="/assets/brachiosaurus-master.webp" alt="Brachiosaurus" /><span>3D Meadow loads when Three.js is available.</span></div>}
-    </div>
-  }
-}
-
-class MelTimeScreen extends React.Component {
   constructor(props) { super(props); this.canvas = React.createRef(); this.controller = null; this.state = { fallback: false } }
   componentDidMount() { this.mountScene() }
   componentDidUpdate(prev) { if (prev.revivedKey !== this.props.revivedKey) { this.controller?.destroy(); this.mountScene() } }
