@@ -46,7 +46,7 @@ test('selected creature is forwarded into the melt scene', () => {
   const scenes = read('src/three/scenes.js')
   assert.match(app, /MeltVisual progress=\{melt\} creatureId=\{creature\.id\}/)
   assert.match(scenes, /createMeltScene\(canvas,progress=0,creatureId='brachiosaurus'\)/)
-  assert.match(scenes, /loadOrFallback\(creatureId,/)
+  assert.match(app, /CreatureArt creature=\{creature\} className="melt-creature-art"/)
 })
 
 test('Meadow creatures have deterministic ambient walking motion', () => {
