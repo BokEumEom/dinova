@@ -1,5 +1,6 @@
 import React from 'react'
 import { CREATURES, CREATURE_BY_ID } from './data/creatures.mjs'
+import { MAP_AREAS, mapAreaForCreature } from './data/mapSlots.mjs'
 import { calculateRemainingMs, formatClock, progressForFocusedMinutes, visualMeltStage } from './domain/focus.mjs'
 import {
   completeSession, loadGameState, pauseSession, resetSession, resumeSession,
@@ -84,11 +85,11 @@ class MeltVisual extends React.Component {
 class MapVisual extends React.Component {
   constructor(props) { super(props); this.canvas = React.createRef(); this.controller = null; this.state = { fallback: false } }
   componentDidMount() { this.mountScene() }
-  componentDidUpdate(prev) { if (prev.revivedKey !== this.props.revivedKey) { this.controller?.destroy(); this.mountScene() } }
+  componentDidUpdate(prev) { if (prev.revivedKey !== this.props.revivedKey || prev.areaId !== this.props.areaId) { this.controller?.destroy(); this.mountScene() } }
   componentWillUnmount() { this.controller?.destroy() }
   mountScene() {
     import('./three/scenes.js').then(({ createMeadowScene }) => {
-      this.controller = createMeadowScene(this.canvas.current, this.props.revivedIds, this.props.onCreatureClick)
+      this.controller = createMeadowScene(this.canvas.current, this.props.revivedIds, this.props.onCreatureClick, this.props.areaId)
     }).catch(() => this.setState({ fallback: true }))
   }
   render() {
@@ -238,20 +239,27 @@ function CollectionScreen({ game, update, goMelTime }) {
 }
 
 class MapScreen extends React.Component {
-  constructor(props) { super(props); this.state={ selected:null } }
+  constructor(props) {
+    super(props)
+    this.state={ selected:null, areaId:mapAreaForCreature(props.game.activeCreatureId) }
+  }
   render() {
     const { game, update } = this.props
+    const { areaId } = this.state
+    const area = MAP_AREAS.find(item=>item.id===areaId) || MAP_AREAS[0]
     const selected = this.state.selected ? CREATURE_BY_ID[this.state.selected] : null
+    const residents = CREATURES.filter(creature=>mapAreaForCreature(creature.id)===areaId)
+    const revivedResidents = game.revivedIds.filter(id=>mapAreaForCreature(id)===areaId)
     return <section className="screen map-screen">
-      <BrandHeader title="탐험 지도" subtitle="집중이 쌓일수록, 얼음 너머의 세계가 열립니다." right={<span className="count-pill">{game.revivedIds.length} / 6</span>} />
-      <div className="map-tabs"><button className="active">Sunny Plains</button><button disabled>Snowy Ridge</button><button disabled>Ancient Forest</button></div>
+      <BrandHeader title="탐험 지도" subtitle="집중이 쌓일수록, 얼음 너머의 세계가 열립니다." right={<span className="count-pill">{revivedResidents.length} / {residents.length}</span>} />
+      <div className="map-tabs">{MAP_AREAS.map(item=><button key={item.id} className={areaId===item.id?'active':''} onClick={()=>this.setState({areaId:item.id,selected:null})}>{item.koName}</button>)}</div>
       <div className="map-stage">
-        <MapVisual revivedIds={game.revivedIds} revivedKey={game.revivedIds.join('|')} onCreatureClick={id => this.setState({selected:id})} />
-        {game.revivedIds.length === 0 && <div className="map-empty-state"><span>◇</span><strong>아직 깨어난 친구가 없어요</strong><p>MelTime에서 첫 친구를 부활시키면 이 초원에 나타납니다.</p></div>}
+        <MapVisual areaId={areaId} revivedIds={revivedResidents} revivedKey={`${areaId}|${revivedResidents.join('|')}`} onCreatureClick={id => this.setState({selected:id})} />
+        {revivedResidents.length === 0 && <div className="map-empty-state"><span>◇</span><strong>이 지역은 아직 조용해요</strong><p>해당 지역의 친구를 부활시키면 이곳에 나타납니다.</p></div>}
         <div className="map-hud"><span>DRAG TO EXPLORE</span><span>PINCH / WHEEL TO ZOOM</span></div>
-        {selected && <div className="map-creature-pop"><span>Habitat resident</span><strong>{selected.name}</strong><button onClick={() => update(s=>selectCreature(s,selected.id))}>집중 대상으로 선택</button></div>}
+        {selected && <div className="map-creature-pop"><span>{area.koName} resident</span><strong>{selected.name}</strong><button onClick={() => update(s=>selectCreature(s,selected.id))}>집중 대상으로 선택</button></div>}
       </div>
-      <div className="map-info-card"><div><span>MAP 01</span><strong>Sunny Plains</strong></div><p>깨어난 생명체가 초원에 합류합니다. 집중할수록 더 많은 친구와 지역이 열립니다.</p></div>
+      <div className="map-info-card"><div><span>{area.id.toUpperCase()}</span><strong>{area.name}</strong></div><p>{area.koName}에서 깨어난 생명체들이 자유롭게 움직입니다. 다른 지역을 눌러 새로운 서식지를 둘러보세요.</p></div>
     </section>
   }
 }
