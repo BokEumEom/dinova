@@ -72,3 +72,15 @@ test('mobile MVP has service worker and installable manifest hooks', () => {
   assert.match(html, /dinova-icon\.svg/)
   assert.match(main, /serviceWorker\.register\('\/sw\.js'\)/)
 })
+
+
+test('Sunny Plains scene includes reference diorama landmarks', () => {
+  const scenes = read('src/three/scenes.js')
+  assert.match(scenes, /stoneArch\(s,-4\.9,-\.4,1\.15\)/)
+  assert.match(scenes, /waterfall\(s,4\.75,-2\.62,1\.15,2\.35/)
+  assert.match(scenes, /mountain\(s,-5\.8/)
+  assert.match(scenes, /brachiosaurus:\[-1\.1,0,-\.3\]/)
+  assert.match(scenes, /triceratops:\[-3\.9,0,2\.6\]/)
+  assert.match(scenes, /stegosaurus:\[2\.6,0,1\.3\]/)
+  assert.match(scenes, /'tyrannosaurus-rex':\[\.9,0,4\.05\]/)
+})
