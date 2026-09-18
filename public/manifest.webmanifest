@@ -1,0 +1,18 @@
+{
+  "name": "DINOVA — Focus. Melt. Revive.",
+  "short_name": "DINOVA",
+  "description": "집중할수록 잠든 생명체가 깨어나는 3D 포커스 앱",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#effaf6",
+  "theme_color": "#78d4c0",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/dinova-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

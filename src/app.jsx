@@ -100,16 +100,62 @@ class MapVisual extends React.Component {
 }
 
 class MelTimeScreen extends React.Component {
-  constructor(props) { super(props); this.state = { now: Date.now() }; this.timer = null }
-  componentDidMount() { this.syncTimer() }
+  constructor(props) { super(props); this.state = { now: Date.now() }; this.timer = null; this.wakeLock = null }
+  componentDidMount() {
+    this.syncTimer()
+    this.syncDocumentTitle()
+    document.addEventListener('visibilitychange', this.handleVisibility)
+    window.addEventListener('keydown', this.handleKeyDown)
+  }
   componentDidUpdate(prev) {
     if (prev.game.session.status !== this.props.game.session.status) this.syncTimer()
+    this.syncDocumentTitle()
     if (this.props.game.session.status === 'running' && this.remaining() <= 0) this.props.update(s => completeSession(s, Date.now()))
   }
-  componentWillUnmount() { clearInterval(this.timer) }
+  componentWillUnmount() {
+    clearInterval(this.timer)
+    document.removeEventListener('visibilitychange', this.handleVisibility)
+    window.removeEventListener('keydown', this.handleKeyDown)
+    this.releaseWakeLock()
+    document.title = 'DINOVA — Focus. Melt. Revive.'
+  }
+  handleVisibility = () => {
+    this.setState({ now: Date.now() })
+    if (document.visibilityState === 'visible' && this.props.game.session.status === 'running') this.requestWakeLock()
+  }
+  handleKeyDown = (event) => {
+    const tag = event.target?.tagName
+    if (event.code !== 'Space' || tag === 'INPUT' || tag === 'BUTTON' || tag === 'TEXTAREA') return
+    event.preventDefault()
+    this.toggleSession()
+  }
+  async requestWakeLock() {
+    if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return
+    try { this.wakeLock = await navigator.wakeLock.request('screen') } catch {}
+  }
+  async releaseWakeLock() {
+    try { await this.wakeLock?.release() } catch {}
+    this.wakeLock = null
+  }
   syncTimer() {
     clearInterval(this.timer)
-    if (this.props.game.session.status === 'running') this.timer = setInterval(() => this.setState({ now: Date.now() }), 250)
+    if (this.props.game.session.status === 'running') {
+      this.requestWakeLock()
+      this.timer = setInterval(() => this.setState({ now: Date.now() }), 250)
+    } else {
+      this.releaseWakeLock()
+    }
+  }
+  syncDocumentTitle() {
+    if (this.props.game.session.status === 'idle') document.title = 'DINOVA — Focus. Melt. Revive.'
+    else document.title = `${formatClock(this.remaining())} · DINOVA`
+  }
+  toggleSession = () => {
+    const { game, update } = this.props
+    const status = game.session.status
+    if (status === 'idle') update(state => startSession(state, Date.now(), game.selectedDurationMinutes))
+    else if (status === 'running') update(state => pauseSession(state, Date.now()))
+    else update(state => resumeSession(state, Date.now()))
   }
   remaining() {
     const game = this.props.game, s = game.session
@@ -123,12 +169,6 @@ class MelTimeScreen extends React.Component {
     const focused = (game.progress[creature.id] || 0) + liveSessionMinutes(game, this.state.now)
     const actual = progressForFocusedMinutes(focused, creature.requiredMinutes)
     const melt = game.previewProgress == null ? actual : game.previewProgress
-    const toggle = () => {
-      const s = game.session.status
-      if (s === 'idle') update(x => startSession(x, Date.now(), game.selectedDurationMinutes))
-      else if (s === 'running') update(x => pauseSession(x, Date.now()))
-      else update(x => resumeSession(x, Date.now()))
-    }
     return <section className="screen meltime-screen">
       <BrandHeader title="MelTime" subtitle="지금, 하나의 집중이 한 친구를 더 가까이 깨워요." right={<span className="day-chip">{creature.biomeName}</span>} />
       <div className="revival-stage">
@@ -149,7 +189,7 @@ class MelTimeScreen extends React.Component {
       <div className="timer-card">
         <div className="session-progress"><i style={{ width: `${Math.max(0, Math.min(100, (1 - remaining/(game.selectedDurationMinutes*60000))*100))}%` }} /></div>
         <div className="timer">{formatClock(remaining)}</div>
-        <button className={`focus-button ${game.session.status}`} onClick={toggle}>{game.session.status === 'running' ? 'Ⅱ' : '▶'}</button>
+        <button className={`focus-button ${game.session.status}`} onClick={this.toggleSession}>{game.session.status === 'running' ? 'Ⅱ' : '▶'}</button>
         <div className="duration-row">{[15,25,45,60].map(n => <button key={n} disabled={game.session.status !== 'idle'} className={game.selectedDurationMinutes === n ? 'selected' : ''} onClick={() => update(s => setDuration(s,n))}>{n}</button>)}</div>
         {game.session.status !== 'idle' && <button className="reset-link" onClick={() => update(resetSession)}>세션 초기화</button>}
       </div>

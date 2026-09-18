@@ -63,3 +63,12 @@ test('app renders the canonical 15-creature generated sheet', () => {
   assert.match(app, /function CreatureArt/)
   assert.match(app, /melt-creature-art/)
 })
+
+
+test('mobile MVP has service worker and installable manifest hooks', () => {
+  const html = read('index.html')
+  const main = read('src/main.jsx')
+  assert.match(html, /manifest\.webmanifest/)
+  assert.match(html, /dinova-icon\.svg/)
+  assert.match(main, /serviceWorker\.register\('\/sw\.js'\)/)
+})
