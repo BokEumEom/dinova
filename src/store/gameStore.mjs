@@ -1,5 +1,5 @@
 import { clamp } from '../domain/focus.mjs'
-import { CREATURE_BY_ID } from '../data/creatures.mjs'
+import { CREATURE_BY_ID, CREATURES } from '../data/creatures.mjs'
 
 export const STORAGE_KEY = 'dinova.game.v1'
 
