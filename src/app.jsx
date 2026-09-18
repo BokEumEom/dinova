@@ -23,10 +23,10 @@ function CreatureArt({ creature, className = '', locked = false }) {
   />
 }
 const NAV = [
-  ['meltime', '◷', 'MelTime'],
-  ['collection', '▤', 'Collection'],
-  ['map', '⌖', 'Map'],
-  ['profile', '●', 'Profile'],
+  ['meltime', '◷', '멜타임'],
+  ['collection', '▤', '도감'],
+  ['map', '⌖', '지도'],
+  ['profile', '●', '프로필'],
 ]
 
 const percent = (n) => `${Math.round(n * 100)}%`
@@ -130,7 +130,7 @@ class MelTimeScreen extends React.Component {
       else update(x => resumeSession(x, Date.now()))
     }
     return <section className="screen meltime-screen">
-      <BrandHeader title="MelTime" subtitle="집중한 시간만큼 얼음을 녹이고, 생명체를 깨웁니다." right={<span className="day-chip">DAY 01</span>} />
+      <BrandHeader title="MelTime" subtitle="지금, 하나의 집중이 한 친구를 더 가까이 깨워요." right={<span className="day-chip">{creature.biomeName}</span>} />
       <div className="revival-stage">
         <MeltVisual progress={melt} creatureId={creature.id} />
         <div className="creature-tag"><span>{creature.koName}</span><strong>{creature.name}</strong></div>
@@ -158,19 +158,42 @@ class MelTimeScreen extends React.Component {
 }
 
 function CollectionScreen({ game, update, goMelTime }) {
-  const choose = id => { update(s => selectCreature(s,id)); goMelTime() }
+  const [filter, setFilter] = React.useState('all')
+  const [detailId, setDetailId] = React.useState(null)
+  const filters = [['all','전체'],['meadow','초원'],['snowy-ridge','설원'],['ancient-forest','고대 숲'],['locked','미발견']]
+  const visible = CREATURES.filter((creature) => {
+    const p = progressForFocusedMinutes(game.progress[creature.id] || 0, creature.requiredMinutes)
+    if (filter === 'all') return true
+    if (filter === 'locked') return !game.revivedIds.includes(creature.id) && p === 0
+    return creature.biomeId === filter
+  })
+  const detail = detailId ? CREATURE_BY_ID[detailId] : null
+  const choose = id => { update(s => selectCreature(s,id)); setDetailId(null); goMelTime() }
+
   return <section className="screen collection-screen">
-    <BrandHeader title="Collection" subtitle="깨어난 생명체들과 함께해요." right={<strong className="count-pill">{game.revivedIds.length} / {CREATURES.length}</strong>} />
-    <div className="filter-row"><button className="active">All</button><button>Land</button><button>Sky</button><button>Water</button></div>
-    <div className="collection-grid">{CREATURES.map(creature => {
+    <BrandHeader title="빙하 도감" subtitle="차가운 얼음 속, 언젠가 다시 만날 친구들." right={<strong className="count-pill">{game.revivedIds.length} / {CREATURES.length}</strong>} />
+    <div className="filter-row">{filters.map(([id,label]) => <button key={id} className={filter===id?'active':''} onClick={() => setFilter(id)}>{label}</button>)}</div>
+    <div className="collection-grid">{visible.map(creature => {
       const p = progressForFocusedMinutes(game.progress[creature.id] || 0, creature.requiredMinutes)
       const revived = game.revivedIds.includes(creature.id)
-      return <button key={creature.id} className={`collection-card ${game.activeCreatureId===creature.id?'selected-creature':''}`} onClick={() => choose(creature.id)}>
+      return <button key={creature.id} className={`collection-card ${game.activeCreatureId===creature.id?'selected-creature':''}`} onClick={() => setDetailId(creature.id)}>
         <div className="asset-box"><div className="ice-card-shape" /><CreatureArt creature={creature} locked={!revived && p === 0} />{revived && <span className="revived-mark">✓</span>}{!revived && p===0 && <span className="lock-mark">◇</span>}</div>
-        <div className="collection-copy"><strong>{p>0 || revived ? creature.name : '???'}</strong><span>{revived ? 'Revived' : p>0 ? `${Math.round(p*100)}% awake` : creature.rarity}</span></div>
-        {p>0 && !revived && <div className="mini-progress"><i style={{width:percent(p)}} /></div>}
+        <div className="collection-copy"><strong>{p>0 || revived ? creature.name : '???'}</strong><span>{revived ? 'Revived' : p>0 ? `${Math.round(p*100)}% awake` : creature.biomeName}</span></div>
+        <div className="mini-progress"><i style={{width:percent(p)}} /></div>
       </button>
     })}</div>
+    {detail && <div className="detail-backdrop" onClick={() => setDetailId(null)}>
+      <article className="creature-sheet" onClick={event => event.stopPropagation()}>
+        <button className="sheet-close" onClick={() => setDetailId(null)}>×</button>
+        <CreatureArt creature={detail} className="sheet-creature" />
+        <span className="sheet-kicker">{detail.biomeName} · {detail.rarity.toUpperCase()}</span>
+        <h2>{detail.name}</h2>
+        <p>{detail.koName}</p>
+        <div className="sheet-progress"><span>Revival Progress</span><strong>{percent(progressForFocusedMinutes(game.progress[detail.id] || 0, detail.requiredMinutes))}</strong></div>
+        <div className="progress-track"><i style={{width:percent(progressForFocusedMinutes(game.progress[detail.id] || 0, detail.requiredMinutes))}} /></div>
+        <button className="primary-cta" onClick={() => choose(detail.id)}>이 친구 깨우기</button>
+      </article>
+    </div>}
   </section>
 }
 
@@ -180,7 +203,7 @@ class MapScreen extends React.Component {
     const { game, update } = this.props
     const selected = this.state.selected ? CREATURE_BY_ID[this.state.selected] : null
     return <section className="screen map-screen">
-      <BrandHeader title="World Map" subtitle="집중이 모여, 새로운 세상이 열립니다." right={<span className="count-pill">{game.revivedIds.length} / 6</span>} />
+      <BrandHeader title="탐험 지도" subtitle="집중이 쌓일수록, 얼음 너머의 세계가 열립니다." right={<span className="count-pill">{game.revivedIds.length} / 6</span>} />
       <div className="map-tabs"><button className="active">Sunny Plains</button><button disabled>Snowy Ridge</button><button disabled>Ancient Forest</button></div>
       <div className="map-stage">
         <MapVisual revivedIds={game.revivedIds} revivedKey={game.revivedIds.join('|')} onCreatureClick={id => this.setState({selected:id})} />
@@ -193,12 +216,12 @@ class MapScreen extends React.Component {
 }
 
 function ProfileScreen({ game }) {
-  const stats = [['Total focus',`${game.totalFocusMinutes}m`,'◷'],['Sessions',game.completedSessions,'▶'],['Revived',`${game.revivedIds.length}/${CREATURES.length}`,'◇'],['Current streak',`${game.streakDays}d`,'⌁'],['Longest focus',`${game.completedSessions ? game.selectedDurationMinutes : 0}m`,'△'],['Maps unlocked','1/5','▱']]
+  const stats = [['총 집중 시간',`${game.totalFocusMinutes}m`,'◷'],['완료 세션',game.completedSessions,'▶'],['부활한 친구',`${game.revivedIds.length}/${CREATURES.length}`,'◇'],['연속 집중',`${game.streakDays}일`,'⌁'],['최장 집중',`${game.completedSessions ? game.selectedDurationMinutes : 0}m`,'△'],['방문한 지역','1/5','▱']]
   return <section className="screen profile-screen">
-    <BrandHeader title="Explorer" subtitle="오늘도, 조금 더 멋진 세계를 위해." right={<button className="settings-button">⚙</button>} />
-    <div className="profile-hero"><div className="avatar-ring"><CreatureArt creature={CREATURE_BY_ID[game.activeCreatureId] || CREATURES[0]} /></div><div><span>DINOVA EXPLORER</span><strong>Focus Keeper</strong><p>Focus today. Revive the past.</p></div></div>
+    <BrandHeader title="나의 기록" subtitle="작은 시간이 모여, 잊혔던 세계를 다시 푸르게." right={<button className="settings-button">⚙</button>} />
+    <div className="profile-hero"><div className="avatar-ring"><CreatureArt creature={CREATURE_BY_ID[game.activeCreatureId] || CREATURES[0]} /></div><div><span>MY COMPANION</span><strong>{CREATURE_BY_ID[game.activeCreatureId]?.koName}</strong><p>{CREATURE_BY_ID[game.activeCreatureId]?.name}</p></div></div>
     <div className="stats-grid">{stats.map(([label,value,icon]) => <div className="stat-card" key={label}><span className="stat-icon">{icon}</span><div><small>{label}</small><strong>{value}</strong></div></div>)}</div>
-    <div className="achievement-card"><div className="card-title-row"><strong>Achievements</strong><span>0 / 8</span></div><div className="badges"><div>◷<span>First Focus</span></div><div>◇<span>First Revival</span></div><div>△<span>Deep Focus</span></div><div>▱<span>Explorer</span></div></div></div>
+    <div className="achievement-card"><div className="card-title-row"><strong>나의 배지</strong><span>0 / 8</span></div><div className="badges"><div>◷<span>첫 집중</span></div><div>◇<span>첫 부활</span></div><div>△<span>깊은 집중</span></div><div>▱<span>탐험가</span></div></div></div>
     <blockquote>“집중한 시간은 사라지지 않습니다. 이 세계의 한 조각이 됩니다.”</blockquote>
   </section>
 }
