@@ -86,6 +86,7 @@ class MeltVisual extends React.Component {
     }
   }
   componentWillUnmount() { this.controller?.destroy() }
+  resetCamera = () => this.controller?.resetCamera?.()
   mountScene() {
     this.setState({ fallback: false })
     import('./three/scenes.js').then(({ createMeltScene }) => {
@@ -262,6 +263,7 @@ class MapScreen extends React.Component {
   constructor(props) {
     super(props)
     this.state={ selected:null, areaId:mapAreaForCreature(props.game.activeCreatureId) }
+    this.mapRef=React.createRef()
   }
   render() {
     const { game, update } = this.props
@@ -270,16 +272,28 @@ class MapScreen extends React.Component {
     const selected = this.state.selected ? CREATURE_BY_ID[this.state.selected] : null
     const residents = CREATURES.filter(creature=>mapAreaForCreature(creature.id)===areaId)
     const revivedResidents = game.revivedIds.filter(id=>mapAreaForCreature(id)===areaId)
-    return <section className="screen map-screen">
-      <BrandHeader title="탐험 지도" subtitle="집중이 쌓일수록, 얼음 너머의 세계가 열립니다." right={<span className="count-pill">{revivedResidents.length} / {residents.length}</span>} />
-      <div className="map-tabs">{MAP_AREAS.map(item=><button key={item.id} className={areaId===item.id?'active':''} onClick={()=>this.setState({areaId:item.id,selected:null})}>{item.koName}</button>)}</div>
-      <div className="map-stage">
-        <MapVisual areaId={areaId} revivedIds={revivedResidents} revivedKey={`${areaId}|${revivedResidents.join('|')}`} onCreatureClick={id => this.setState({selected:id})} />
-        {revivedResidents.length === 0 && <div className="map-empty-state"><span>◇</span><strong>이 지역은 아직 조용해요</strong><p>해당 지역의 친구를 부활시키면 이곳에 나타납니다.</p></div>}
-        <div className="map-hud"><span>DRAG TO EXPLORE</span><span>PINCH / WHEEL TO ZOOM</span></div>
-        {selected && <div className="map-creature-pop"><span>{area.koName} resident</span><strong>{selected.name}</strong><button onClick={() => update(s=>selectCreature(s,selected.id))}>집중 대상으로 선택</button></div>}
+    const active = CREATURE_BY_ID[game.activeCreatureId] || CREATURES[0]
+    const activeRemaining = Math.max(0,active.requiredMinutes-(game.progress[active.id]||0))
+    return <section className="screen map-screen immersive-map-screen">
+      <BrandHeader title="탐험 지도" subtitle="집중이 쌓일수록, 살아있는 공룡 공원이 커집니다." />
+      <div className="map-stage dino-park-stage">
+        <MapVisual ref={this.mapRef} areaId={areaId} revivedIds={revivedResidents} revivedKey={`${areaId}|${revivedResidents.join('|')}`} onCreatureClick={id => this.setState({selected:id})} />
+        <div className="park-status-card">
+          <span>{area.koName}</span>
+          <strong>{area.name}</strong>
+          <div><b>{revivedResidents.length}/{residents.length}</b><i><em style={{width:`${residents.length?revivedResidents.length/residents.length*100:0}%`}} /></i></div>
+        </div>
+        <div className="park-resource-row">
+          <span>🌿 {game.totalFocusMinutes}</span>
+          <span>◇ {game.revivedIds.length}</span>
+          <button aria-label="카메라 초기화" onClick={()=>this.mapRef.current?.resetCamera()}>↺</button>
+        </div>
+        <div className="map-area-dock">{MAP_AREAS.map(item=><button key={item.id} className={areaId===item.id?'active':''} onClick={()=>this.setState({areaId:item.id,selected:null})}>{item.koName}</button>)}</div>
+        {revivedResidents.length === 0 && <div className="map-empty-state"><span>◇</span><strong>이 지역은 아직 조용해요</strong><p>해당 지역의 친구를 부활시키면 이 3D 공원에 나타납니다.</p></div>}
+        {selected && <div className="map-creature-pop"><span>{area.koName} resident</span><strong>{selected.koName}</strong><small>{selected.name}</small><button onClick={() => update(s=>selectCreature(s,selected.id))}>집중 대상으로 선택</button></div>}
+        <div className="park-growth-card"><span>🌱 다음 부활까지</span><strong>{activeRemaining}분</strong><small>{active.koName}</small></div>
       </div>
-      <div className="map-info-card"><div><span>{area.id.toUpperCase()}</span><strong>{area.name}</strong></div><p>{area.koName}에서 깨어난 생명체들이 자유롭게 움직입니다. 다른 지역을 눌러 새로운 서식지를 둘러보세요.</p></div>
+      <div className="map-info-card"><div><span>3D HABITAT</span><strong>{area.name}</strong></div><p>드래그해서 둘러보고 공룡을 탭해 보세요. 부활한 친구만 실제 서식지에 등장합니다.</p></div>
     </section>
   }
 }

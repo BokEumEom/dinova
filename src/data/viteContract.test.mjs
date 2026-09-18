@@ -84,3 +84,15 @@ test('Sunny Plains scene includes reference diorama landmarks', () => {
   assert.match(scenes, /stegosaurus:\[2\.6,0,1\.3\]/)
   assert.match(scenes, /'tyrannosaurus-rex':\[\.9,0,4\.05\]/)
 })
+
+
+test('Dino Park reference landmarks are implemented as real Three.js geometry', () => {
+  const scenes = read('src/three/scenes.js')
+  assert.match(scenes, /function tent\(/)
+  assert.match(scenes, /function bridge\(/)
+  assert.match(scenes, /function watchTower\(/)
+  assert.match(scenes, /function cave\(/)
+  assert.match(scenes, /function fence\(/)
+  assert.match(scenes, /plateau\(s,0,-5\.25/)
+  assert.match(scenes, /waterfall\(s,\.25,-4\.75/)
+})
