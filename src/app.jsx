@@ -137,7 +137,7 @@ class MelTimeScreen extends React.Component {
 function CollectionScreen({ game, update, goMelTime }) {
   const choose = id => { update(s => selectCreature(s,id)); goMelTime() }
   return <section className="screen collection-screen">
-    <BrandHeader title="Collection" subtitle="같은 민트 로우폴리 언어로 통일된 생명체 컬렉션." right={<strong className="count-pill">{game.revivedIds.length} / {CREATURES.length}</strong>} />
+    <BrandHeader title="Collection" subtitle="깨어난 생명체들과 함께해요." right={<strong className="count-pill">{game.revivedIds.length} / {CREATURES.length}</strong>} />
     <div className="filter-row"><button className="active">All</button><button>Land</button><button>Sky</button><button>Water</button></div>
     <div className="collection-grid">{CREATURES.map(creature => {
       const p = progressForFocusedMinutes(game.progress[creature.id] || 0, creature.requiredMinutes)
@@ -158,14 +158,14 @@ class MapScreen extends React.Component {
     const { game, update } = this.props
     const selected = this.state.selected ? CREATURE_BY_ID[this.state.selected] : null
     return <section className="screen map-screen">
-      <BrandHeader title="Mint Meadow" subtitle="해금된 공룡을 실제 3D 초원에 배치하는 월드 탭." right={<span className="count-pill">{game.revivedIds.length} / 6</span>} />
-      <div className="map-tabs"><button className="active">Meadow</button><button disabled>Snowy Ridge</button><button disabled>Ancient Forest</button></div>
+      <BrandHeader title="World Map" subtitle="집중이 모여, 새로운 세상이 열립니다." right={<span className="count-pill">{game.revivedIds.length} / 6</span>} />
+      <div className="map-tabs"><button className="active">Sunny Plains</button><button disabled>Snowy Ridge</button><button disabled>Ancient Forest</button></div>
       <div className="map-stage">
         <MapVisual revivedIds={game.revivedIds} revivedKey={game.revivedIds.join('|')} onCreatureClick={id => this.setState({selected:id})} />
         <div className="map-hud"><span>DRAG TO EXPLORE</span><span>PINCH / WHEEL TO ZOOM</span></div>
         {selected && <div className="map-creature-pop"><span>Habitat resident</span><strong>{selected.name}</strong><button onClick={() => update(s=>selectCreature(s,selected.id))}>집중 대상으로 선택</button></div>}
       </div>
-      <div className="map-info-card"><div><span>MAP 01</span><strong>The Meadow</strong></div><p>깨어난 생명체만 초원에 나타납니다. 아직 첫 부활 전이라면 얼음 형태의 서식지 프리뷰가 보입니다.</p></div>
+      <div className="map-info-card"><div><span>MAP 01</span><strong>Sunny Plains</strong></div><p>깨어난 생명체가 초원에 합류합니다. 집중할수록 더 많은 친구와 지역이 열립니다.</p></div>
     </section>
   }
 }
@@ -173,7 +173,7 @@ class MapScreen extends React.Component {
 function ProfileScreen({ game }) {
   const stats = [['Total focus',`${game.totalFocusMinutes}m`,'◷'],['Sessions',game.completedSessions,'▶'],['Revived',`${game.revivedIds.length}/${CREATURES.length}`,'◇'],['Current streak',`${game.streakDays}d`,'⌁'],['Longest focus',`${game.completedSessions ? game.selectedDurationMinutes : 0}m`,'△'],['Maps unlocked','1/5','▱']]
   return <section className="screen profile-screen">
-    <BrandHeader title="Explorer" subtitle="작은 집중이 당신만의 선사시대 세계를 만듭니다." right={<button className="settings-button">⚙</button>} />
+    <BrandHeader title="Explorer" subtitle="오늘도, 조금 더 멋진 세계를 위해." right={<button className="settings-button">⚙</button>} />
     <div className="profile-hero"><div className="avatar-ring"><img src="/assets/brachiosaurus-master.webp" alt="Brachiosaurus companion"/></div><div><span>DINOVA EXPLORER</span><strong>Focus Keeper</strong><p>Focus today. Revive the past.</p></div></div>
     <div className="stats-grid">{stats.map(([label,value,icon]) => <div className="stat-card" key={label}><span className="stat-icon">{icon}</span><div><small>{label}</small><strong>{value}</strong></div></div>)}</div>
     <div className="achievement-card"><div className="card-title-row"><strong>Achievements</strong><span>0 / 8</span></div><div className="badges"><div>◷<span>First Focus</span></div><div>◇<span>First Revival</span></div><div>△<span>Deep Focus</span></div><div>▱<span>Explorer</span></div></div></div>
@@ -188,8 +188,8 @@ export default class App extends React.Component {
     const { tab, game } = this.state
     return <main className="app-shell">
       <div className="ambient-orb orb-one"/><div className="ambient-orb orb-two"/>
-      <div className="app-frame">
-        <div className="status-bar"><span>DINOVA</span><span className="status-icons">● ◔ ▰</span></div>
+      <div className={`app-frame theme-${tab}`}>
+        <div className="status-bar"><span className="brand-script">Dinova</span><span className="status-icons">● ◔ ▰</span></div>
         <div className="screen-scroll">
           {tab==='meltime' && <MelTimeScreen game={game} update={this.update}/>} 
           {tab==='collection' && <CollectionScreen game={game} update={this.update} goMelTime={()=>this.setState({tab:'meltime'})}/>} 
