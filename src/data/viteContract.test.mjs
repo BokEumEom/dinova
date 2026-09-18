@@ -92,3 +92,17 @@ test('MapVisual exposes camera reset for the immersive 3D map HUD', () => {
   assert.match(app, /class MapVisual extends React\.Component[\s\S]*?resetCamera = \(\) => this\.controller\?\.resetCamera\?\.\(\)/)
   assert.doesNotMatch(app, /class MeltVisual extends React\.Component[\s\S]{0,500}?resetCamera =/)
 })
+
+
+test('collection filters use actual 3D habitat areas', () => {
+  const app=read('src/app.jsx')
+  assert.match(app, /MAP_AREAS\.map\(area=>\[area\.id,area\.koName\]\)/)
+  assert.match(app, /mapAreaForCreature\(creature\.id\) === filter/)
+})
+
+test('App owns global wake lock and timer title across tabs', () => {
+  const app=read('src/app.jsx')
+  assert.match(app, /class App extends React\.Component[\s\S]*?syncWakeLock\(\)/)
+  assert.match(app, /updateDocumentTitle\(\)/)
+  assert.match(app, /navigator\.wakeLock\.request\('screen'\)/)
+})

@@ -122,27 +122,24 @@ class MapVisual extends React.Component {
 }
 
 class MelTimeScreen extends React.Component {
-  constructor(props) { super(props); this.state = { now: Date.now() }; this.timer = null; this.wakeLock = null }
+  constructor(props) { super(props); this.state = { now: Date.now() }; this.timer = null }
   componentDidMount() {
     this.syncTimer()
-    this.syncDocumentTitle()
     document.addEventListener('visibilitychange', this.handleVisibility)
     window.addEventListener('keydown', this.handleKeyDown)
   }
   componentDidUpdate(prev) {
     if (prev.game.session.status !== this.props.game.session.status) this.syncTimer()
-    this.syncDocumentTitle()
   }
   componentWillUnmount() {
     clearInterval(this.timer)
     document.removeEventListener('visibilitychange', this.handleVisibility)
     window.removeEventListener('keydown', this.handleKeyDown)
-    this.releaseWakeLock()
-    document.title = 'DINOVA — Focus. Melt. Revive.'
+
   }
   handleVisibility = () => {
     this.setState({ now: Date.now() })
-    if (document.visibilityState === 'visible' && this.props.game.session.status === 'running') this.requestWakeLock()
+
   }
   handleKeyDown = (event) => {
     const tag = event.target?.tagName
@@ -150,26 +147,9 @@ class MelTimeScreen extends React.Component {
     event.preventDefault()
     this.toggleSession()
   }
-  async requestWakeLock() {
-    if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return
-    try { this.wakeLock = await navigator.wakeLock.request('screen') } catch {}
-  }
-  async releaseWakeLock() {
-    try { await this.wakeLock?.release() } catch {}
-    this.wakeLock = null
-  }
   syncTimer() {
     clearInterval(this.timer)
-    if (this.props.game.session.status === 'running') {
-      this.requestWakeLock()
-      this.timer = setInterval(() => this.setState({ now: Date.now() }), 250)
-    } else {
-      this.releaseWakeLock()
-    }
-  }
-  syncDocumentTitle() {
-    if (this.props.game.session.status === 'idle') document.title = 'DINOVA — Focus. Melt. Revive.'
-    else document.title = `${formatClock(this.remaining())} · DINOVA`
+    if (this.props.game.session.status === 'running') this.timer = setInterval(() => this.setState({ now: Date.now() }), 250)
   }
   toggleSession = () => {
     const { game, update } = this.props
@@ -190,6 +170,8 @@ class MelTimeScreen extends React.Component {
     const focused = (game.progress[creature.id] || 0) + liveSessionMinutes(game, this.state.now)
     const actual = progressForFocusedMinutes(focused, creature.requiredMinutes)
     const melt = game.previewProgress == null ? actual : game.previewProgress
+    const alreadyRevived = game.revivedIds.includes(creature.id)
+    const nextTarget = CREATURES.find(candidate => !game.revivedIds.includes(candidate.id) && candidate.id !== creature.id)
     return <section className="screen meltime-screen">
       <BrandHeader title="MelTime" subtitle="지금, 하나의 집중이 한 친구를 더 가까이 깨워요." right={<span className="day-chip">{creature.biomeName}</span>} />
       <div className="revival-stage">
@@ -200,7 +182,9 @@ class MelTimeScreen extends React.Component {
       <div className="revival-summary">
         <div><span>Revival progress</span><strong>{percent(actual)}</strong></div>
         <div className="progress-track"><i style={{ width: percent(actual) }} /></div>
-        <small>{Math.ceil(Math.max(0, creature.requiredMinutes - focused))}분 더 집중하면 이 생명체가 깨어납니다.</small>
+        {alreadyRevived
+          ? <div className="revived-next"><small>이 친구는 이미 부활했어요.</small>{nextTarget && <button onClick={()=>update(state=>selectCreature(state,nextTarget.id))}>다음 친구 · {nextTarget.koName}</button>}</div>
+          : <small>{Math.ceil(Math.max(0, creature.requiredMinutes - focused))}분 더 집중하면 이 생명체가 깨어납니다.</small>}
       </div>
       <div className="preview-card">
         <div className="card-title-row"><strong>Melt Preview</strong><button className="text-button" onClick={() => update(s => setPreviewProgress(s, null))}>실제 진행률</button></div>
@@ -221,12 +205,12 @@ class MelTimeScreen extends React.Component {
 function CollectionScreen({ game, update, goMelTime }) {
   const [filter, setFilter] = React.useState('all')
   const [detailId, setDetailId] = React.useState(null)
-  const filters = [['all','전체'],['meadow','초원'],['snowy-ridge','설원'],['ancient-forest','고대 숲'],['locked','미발견']]
+  const filters = [['all','전체'],...MAP_AREAS.map(area=>[area.id,area.koName]),['locked','미발견']]
   const visible = CREATURES.filter((creature) => {
     const p = progressForFocusedMinutes(game.progress[creature.id] || 0, creature.requiredMinutes)
     if (filter === 'all') return true
     if (filter === 'locked') return !game.revivedIds.includes(creature.id) && p === 0
-    return creature.biomeId === filter
+    return mapAreaForCreature(creature.id) === filter
   })
   const detail = detailId ? CREATURE_BY_ID[detailId] : null
   const choose = id => { update(s => selectCreature(s,id)); setDetailId(null); goMelTime() }
@@ -345,12 +329,23 @@ function ProfileScreen({ game, update }) {
 }
 
 export default class App extends React.Component {
-  constructor(props) { super(props); this.state = { tab:'meltime', game:loadGameState(), celebration:null }; this.sessionWatcher=null }
-  componentDidMount() { this.syncSessionWatcher(); this.finishExpiredSession() }
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.game.session.status !== this.state.game.session.status) this.syncSessionWatcher()
+  constructor(props) { super(props); this.state = { tab:'meltime', game:loadGameState(), celebration:null }; this.sessionWatcher=null; this.wakeLock=null }
+  componentDidMount() {
+    this.syncSessionWatcher(); this.finishExpiredSession(); this.syncWakeLock(); this.updateDocumentTitle()
+    document.addEventListener('visibilitychange',this.handleAppVisibility)
   }
-  componentWillUnmount() { clearInterval(this.sessionWatcher) }
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.game.session.status !== this.state.game.session.status) {
+      this.syncSessionWatcher(); this.syncWakeLock()
+    }
+    this.updateDocumentTitle()
+  }
+  componentWillUnmount() {
+    clearInterval(this.sessionWatcher)
+    document.removeEventListener('visibilitychange',this.handleAppVisibility)
+    this.releaseWakeLock()
+    document.title='DINOVA — Focus. Melt. Revive.'
+  }
   remainingFor(game, now=Date.now()) {
     const s=game.session
     if (s.status==='idle' || s.startedAt == null) return game.selectedDurationMinutes*60000
@@ -358,7 +353,30 @@ export default class App extends React.Component {
   }
   syncSessionWatcher() {
     clearInterval(this.sessionWatcher)
-    if (this.state.game.session.status==='running') this.sessionWatcher=setInterval(this.finishExpiredSession,500)
+    if (this.state.game.session.status==='running') this.sessionWatcher=setInterval(()=>{this.finishExpiredSession();this.updateDocumentTitle()},500)
+  }
+  handleAppVisibility = () => {
+    if (document.visibilityState==='visible') {
+      this.finishExpiredSession()
+      this.syncWakeLock()
+    }
+  }
+  async requestWakeLock() {
+    if (!('wakeLock' in navigator) || document.visibilityState!=='visible' || this.wakeLock) return
+    try { this.wakeLock=await navigator.wakeLock.request('screen') } catch {}
+  }
+  async releaseWakeLock() {
+    try { await this.wakeLock?.release() } catch {}
+    this.wakeLock=null
+  }
+  syncWakeLock() {
+    if (this.state.game.session.status==='running') this.requestWakeLock()
+    else this.releaseWakeLock()
+  }
+  updateDocumentTitle() {
+    const game=this.state.game
+    if (game.session.status==='idle') document.title='DINOVA — Focus. Melt. Revive.'
+    else document.title=`${formatClock(this.remainingFor(game))} · DINOVA`
   }
   finishExpiredSession = () => {
     const game=this.state.game

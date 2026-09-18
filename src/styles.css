@@ -395,3 +395,7 @@ button{cursor:pointer}
 .focus-history-bars i{display:block;width:100%;max-width:18px;min-height:12px;border-radius:999px 999px 5px 5px;background:linear-gradient(180deg,#78d4c0,#a9e5d6)}
 .focus-history-bars span{font-size:6px;color:#899ba1}
 .history-empty{margin:12px 0 1px;font-size:8px;color:#87999f;text-align:center}
+
+/* Next revival guidance */
+.revived-next{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.revived-next small{color:#708890}.revived-next button{border:0;border-radius:999px;padding:6px 9px;background:#ddf4eb;color:#367f72;font-size:7px;font-weight:700;white-space:nowrap}
