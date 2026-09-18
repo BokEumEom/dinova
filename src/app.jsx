@@ -42,7 +42,7 @@ function BottomNav({ tab, onTab }) {
 }
 
 class MeltVisual extends React.Component {
-  constructor(props) { super(props); this.state = { now: Date.now() }; this.timer = null }
+  constructor(props) { super(props); this.canvas = React.createRef(); this.controller = null; this.state = { fallback: false } }
   componentDidMount() {
     import('./three/scenes.js').then(({ createMeltScene }) => {
       this.controller = createMeltScene(this.canvas.current, this.props.progress)
@@ -77,7 +77,7 @@ class MapVisual extends React.Component {
 }
 
 class MelTimeScreen extends React.Component {
-  constructor(props) { super(props); this.canvas = React.createRef(); this.controller = null; this.state = { fallback: false } }
+  constructor(props) { super(props); this.state = { now: Date.now() }; this.timer = null }
   componentDidMount() { this.syncTimer() }
   componentDidUpdate(prev) {
     if (prev.game.session.status !== this.props.game.session.status) this.syncTimer()
@@ -107,7 +107,7 @@ class MelTimeScreen extends React.Component {
       else update(x => resumeSession(x, Date.now()))
     }
     return <section className="screen meltime-screen">
-      <BrandHeader title="MelTime" subtitle="집중한 시간인 얼일을 녹이고, 생멅체를 깈웍니다." right={<span className="day-chip">DAY 01</span>} />
+      <BrandHeader title="MelTime" subtitle="집중한 시간만큼 얼음을 녹이고, 생명체를 깨웁니다." right={<span className="day-chip">DAY 01</span>} />
       <div className="revival-stage">
         <MeltVisual progress={melt} />
         <div className="creature-tag"><span>{creature.koName}</span><strong>{creature.name}</strong></div>
@@ -116,7 +116,7 @@ class MelTimeScreen extends React.Component {
       <div className="revival-summary">
         <div><span>Revival progress</span><strong>{percent(actual)}</strong></div>
         <div className="progress-track"><i style={{ width: percent(actual) }} /></div>
-        <small>{Math.ceil(Math.max(0, creature.requiredMinutes - focused))}분 더 집중하면 애직 진 깈는니다.</small>
+        <small>{Math.ceil(Math.max(0, creature.requiredMinutes - focused))}분 더 집중하면 이 생명체가 깨어납니다.</small>
       </div>
       <div className="preview-card">
         <div className="card-title-row"><strong>Melt Preview</strong><button className="text-button" onClick={() => update(s => setPreviewProgress(s, null))}>실제 진행률</button></div>

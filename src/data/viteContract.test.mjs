@@ -32,3 +32,10 @@ test('MelTimeScreen is declared exactly once so Vite can transform app.jsx', () 
   const matches = app.match(/class MelTimeScreen extends React\.Component/g) ?? []
   assert.equal(matches.length, 1)
 })
+
+
+test('MeltVisual keeps a canvas ref and MelTimeScreen initializes its clock', () => {
+  const app = read('src/app.jsx')
+  assert.match(app, /class MeltVisual extends React\.Component[\s\S]*?this\.canvas = React\.createRef\(\)/)
+  assert.match(app, /class MelTimeScreen extends React\.Component[\s\S]*?this\.state = \{ now: Date\.now\(\) \}/)
+})
