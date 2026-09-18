@@ -86,7 +86,6 @@ class MeltVisual extends React.Component {
     }
   }
   componentWillUnmount() { this.controller?.destroy() }
-  resetCamera = () => this.controller?.resetCamera?.()
   mountScene() {
     this.setState({ fallback: false })
     import('./three/scenes.js').then(({ createMeltScene }) => {
@@ -108,6 +107,7 @@ class MapVisual extends React.Component {
   componentDidMount() { this.mountScene() }
   componentDidUpdate(prev) { if (prev.revivedKey !== this.props.revivedKey || prev.areaId !== this.props.areaId) { this.controller?.destroy(); this.mountScene() } }
   componentWillUnmount() { this.controller?.destroy() }
+  resetCamera = () => this.controller?.resetCamera?.()
   mountScene() {
     import('./three/scenes.js').then(({ createMeadowScene }) => {
       this.controller = createMeadowScene(this.canvas.current, this.props.revivedIds, this.props.onCreatureClick, this.props.areaId)

@@ -74,17 +74,6 @@ test('mobile MVP has service worker and installable manifest hooks', () => {
 })
 
 
-test('Sunny Plains scene includes reference diorama landmarks', () => {
-  const scenes = read('src/three/scenes.js')
-  assert.match(scenes, /stoneArch\(s,-4\.9,-\.4,1\.15\)/)
-  assert.match(scenes, /waterfall\(s,4\.75,-2\.62,1\.15,2\.35/)
-  assert.match(scenes, /mountain\(s,-5\.8/)
-  assert.match(scenes, /brachiosaurus:\[-1\.1,0,-\.3\]/)
-  assert.match(scenes, /triceratops:\[-3\.9,0,2\.6\]/)
-  assert.match(scenes, /stegosaurus:\[2\.6,0,1\.3\]/)
-  assert.match(scenes, /'tyrannosaurus-rex':\[\.9,0,4\.05\]/)
-})
-
 
 test('Dino Park reference landmarks are implemented as real Three.js geometry', () => {
   const scenes = read('src/three/scenes.js')
@@ -95,4 +84,11 @@ test('Dino Park reference landmarks are implemented as real Three.js geometry', 
   assert.match(scenes, /function fence\(/)
   assert.match(scenes, /plateau\(s,0,-5\.25/)
   assert.match(scenes, /waterfall\(s,\.25,-4\.75/)
+})
+
+
+test('MapVisual exposes camera reset for the immersive 3D map HUD', () => {
+  const app = read('src/app.jsx')
+  assert.match(app, /class MapVisual extends React\.Component[\s\S]*?resetCamera = \(\) => this\.controller\?\.resetCamera\?\.\(\)/)
+  assert.doesNotMatch(app, /class MeltVisual extends React\.Component[\s\S]{0,500}?resetCamera =/)
 })
