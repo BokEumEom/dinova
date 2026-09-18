@@ -368,3 +368,10 @@ button{cursor:pointer}
 .revival-celebration{position:absolute;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(47,68,76,.28);backdrop-filter:blur(8px)}
 .celebration-card{width:100%;padding:22px 22px 18px;border-radius:28px;background:linear-gradient(180deg,#fbffff,#edf9f7);box-shadow:0 24px 65px rgba(42,73,77,.2);text-align:center}
 .celebration-kicker{font-size:8px;font-weight:700;letter-spacing:.2em;color:#56ac9b}.celebration-creature{width:82%;margin:2px auto -8px}.celebration-card h2{font-size:23px;margin:0}.celebration-card p{font-size:10px;line-height:1.6;color:#789099;margin:5px 0 13px}.celebration-close{border:0;background:none;color:#718a92;font-size:9px;margin-top:9px}
+
+/* Settings & reduced-motion MVP */
+.settings-sheet{width:min(430px,100%);padding:18px 20px calc(22px + env(safe-area-inset-bottom));border-radius:28px 28px 0 0;background:#fbfefe;box-shadow:0 -18px 50px rgba(45,77,85,.14)}
+.settings-title{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}.settings-title span{font-size:7px;letter-spacing:.18em;color:#5bac9c}.settings-title h2{font-size:22px;margin:1px 0}.settings-title button{border:0;width:30px;height:30px;border-radius:50%;background:#e9f4f4;color:#647d86;font-size:18px}
+.setting-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 2px;border-top:1px solid #e8f0f1}.setting-row>div{display:flex;flex-direction:column}.setting-row strong{font-size:11px}.setting-row span{font-size:8px;line-height:1.5;color:#81959c;margin-top:2px}.setting-row input{width:38px;height:20px;accent-color:#62c7b1}
+.danger-button{width:100%;margin-top:9px;border:1px solid #f0d8d5;background:#fff7f6;color:#a45b55;border-radius:14px;padding:11px;font-size:9px}.danger-button.confirm{background:#a45b55;color:white}.settings-note{text-align:center;color:#91a1a6;font-size:7px;margin:9px 0 0}
+.reduce-motion *{scroll-behavior:auto!important;animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}

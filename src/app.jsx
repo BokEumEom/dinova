@@ -3,8 +3,8 @@ import { CREATURES, CREATURE_BY_ID } from './data/creatures.mjs'
 import { MAP_AREAS, mapAreaForCreature } from './data/mapSlots.mjs'
 import { calculateRemainingMs, formatClock, progressForFocusedMinutes, visualMeltStage } from './domain/focus.mjs'
 import {
-  completeSession, loadGameState, pauseSession, resetSession, resumeSession,
-  saveGameState, selectCreature, setDuration, setPreviewProgress, startSession,
+  completeSession, createInitialGameState, loadGameState, pauseSession, resetSession, resumeSession,
+  saveGameState, selectCreature, setDuration, setPreviewProgress, setSetting, startSession,
 } from './store/gameStore.mjs'
 
 const ASSET_SHEET = '/assets/dinova-creatures-15.webp'
@@ -31,6 +31,26 @@ const NAV = [
 ]
 
 const percent = (n) => `${Math.round(n * 100)}%`
+
+function playCompleteFeedback(settings) {
+  if (navigator.vibrate) navigator.vibrate([35, 30, 55])
+  if (!settings?.sound) return
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext
+    if (!AudioContext) return
+    const ctx = new AudioContext()
+    const now = ctx.currentTime
+    ;[523.25,659.25,783.99].forEach((frequency,index)=>{
+      const osc=ctx.createOscillator(),gain=ctx.createGain()
+      osc.type='sine';osc.frequency.value=frequency
+      gain.gain.setValueAtTime(.0001,now+index*.09)
+      gain.gain.exponentialRampToValueAtTime(.08,now+index*.09+.02)
+      gain.gain.exponentialRampToValueAtTime(.0001,now+index*.09+.16)
+      osc.connect(gain);gain.connect(ctx.destination);osc.start(now+index*.09);osc.stop(now+index*.09+.18)
+    })
+    setTimeout(()=>ctx.close().catch(()=>{}),700)
+  } catch {}
+}
 
 function liveSessionMinutes(game, now) {
   const s = game.session
@@ -264,7 +284,9 @@ class MapScreen extends React.Component {
   }
 }
 
-function ProfileScreen({ game }) {
+function ProfileScreen({ game, update }) {
+  const [settingsOpen,setSettingsOpen]=React.useState(false)
+  const [confirmReset,setConfirmReset]=React.useState(false)
   const active = CREATURE_BY_ID[game.activeCreatureId] || CREATURES[0]
   const stats = [
     ['총 집중 시간',`${game.totalFocusMinutes}m`,'◷'],
@@ -272,20 +294,34 @@ function ProfileScreen({ game }) {
     ['부활한 친구',`${game.revivedIds.length}/${CREATURES.length}`,'◇'],
     ['연속 집중',`${game.streakDays}일`,'⌁'],
     ['최장 집중',`${game.completedSessions ? game.selectedDurationMinutes : 0}m`,'△'],
-    ['방문한 지역','1/5','▱'],
+    ['방문한 지역',`${new Set(game.revivedIds.map(mapAreaForCreature)).size || 0}/${MAP_AREAS.length}`,'▱'],
   ]
   const badges = [
     ['◷','첫 집중',game.completedSessions > 0],
     ['◇','첫 부활',game.revivedIds.length > 0],
     ['△','1시간 집중',game.totalFocusMinutes >= 60],
-    ['▱','탐험가',game.revivedIds.length >= 3],
+    ['▱','탐험가',new Set(game.revivedIds.map(mapAreaForCreature)).size >= 2],
   ]
+  const resetAll=()=>{
+    if(!confirmReset){setConfirmReset(true);return}
+    update(()=>createInitialGameState())
+    setConfirmReset(false);setSettingsOpen(false)
+  }
   return <section className="screen profile-screen">
-    <BrandHeader title="나의 기록" subtitle="작은 시간이 모여, 잊혔던 세계를 다시 푸르게." right={<button className="settings-button">⚙</button>} />
+    <BrandHeader title="나의 기록" subtitle="작은 시간이 모여, 잊혔던 세계를 다시 푸르게." right={<button className="settings-button" aria-label="설정" onClick={()=>setSettingsOpen(true)}>⚙</button>} />
     <div className="profile-hero"><div className="avatar-ring"><CreatureArt creature={active} /></div><div><span>MY COMPANION</span><strong>{active.koName}</strong><p>{active.name}</p></div></div>
     <div className="stats-grid">{stats.map(([label,value,icon]) => <div className="stat-card" key={label}><span className="stat-icon">{icon}</span><div><small>{label}</small><strong>{value}</strong></div></div>)}</div>
     <div className="achievement-card"><div className="card-title-row"><strong>나의 배지</strong><span>{badges.filter(([, , earned]) => earned).length} / {badges.length}</span></div><div className="badges">{badges.map(([icon,label,earned]) => <div key={label} className={earned ? 'earned' : ''}>{icon}<span>{label}</span></div>)}</div></div>
     <blockquote>“좋은 집중이, 더 많은 친구를 깨어나게 해요.”</blockquote>
+    {settingsOpen && <div className="detail-backdrop" onClick={()=>{setSettingsOpen(false);setConfirmReset(false)}}>
+      <article className="settings-sheet" onClick={event=>event.stopPropagation()}>
+        <div className="settings-title"><div><span>DINOVA</span><h2>설정</h2></div><button onClick={()=>{setSettingsOpen(false);setConfirmReset(false)}}>×</button></div>
+        <label className="setting-row"><div><strong>집중 완료 알림음</strong><span>세션이 끝나면 짧은 소리와 진동으로 알려요.</span></div><input type="checkbox" checked={game.settings.sound} onChange={event=>update(state=>setSetting(state,'sound',event.target.checked))}/></label>
+        <label className="setting-row"><div><strong>모션 줄이기</strong><span>전환과 장식 움직임을 최소화해요.</span></div><input type="checkbox" checked={game.settings.reduceMotion} onChange={event=>update(state=>setSetting(state,'reduceMotion',event.target.checked))}/></label>
+        <button className={`danger-button ${confirmReset?'confirm':''}`} onClick={resetAll}>{confirmReset?'한 번 더 누르면 모든 기록이 초기화됩니다':'모든 로컬 기록 초기화'}</button>
+        <p className="settings-note">모든 데이터는 현재 브라우저의 localStorage에만 저장됩니다.</p>
+      </article>
+    </div>}
   </section>
 }
 
@@ -294,6 +330,8 @@ export default class App extends React.Component {
   update = (transform) => this.setState(prev => {
     const next = transform(prev.game)
     saveGameState(next)
+    const completedNow = next.completedSessions > prev.game.completedSessions
+    if (completedNow) playCompleteFeedback(next.settings)
     const newRevived = next.revivedIds.find(id => !prev.game.revivedIds.includes(id))
     return { game:next, celebration:newRevived || prev.celebration }
   })
@@ -302,13 +340,13 @@ export default class App extends React.Component {
     const celebratedCreature = celebration ? CREATURE_BY_ID[celebration] : null
     return <main className="app-shell">
       <div className="ambient-orb orb-one"/><div className="ambient-orb orb-two"/>
-      <div className={`app-frame theme-${tab}`}>
+      <div className={`app-frame theme-${tab} ${game.settings.reduceMotion ? 'reduce-motion' : ''}`}>
         <div className="status-bar"><span className="brand-script">Dinova</span><span className="status-icons">● ◔ ▰</span></div>
         <div className="screen-scroll">
           {tab==='meltime' && <MelTimeScreen game={game} update={this.update}/>}
           {tab==='collection' && <CollectionScreen game={game} update={this.update} goMelTime={()=>this.setState({tab:'meltime'})}/>}
           {tab==='map' && <MapScreen game={game} update={this.update}/>}
-          {tab==='profile' && <ProfileScreen game={game}/>}
+          {tab==='profile' && <ProfileScreen game={game} update={this.update}/>} 
         </div>
         <BottomNav tab={tab} onTab={tab => this.setState({tab})}/>
         {celebratedCreature && <div className="revival-celebration">

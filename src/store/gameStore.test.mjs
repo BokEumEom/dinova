@@ -54,3 +54,14 @@ test('preview progress clamps into normalized range', () => {
   state = setPreviewProgress(state, -1)
   assert.equal(state.previewProgress, 0)
 })
+
+
+test('settings persist in game state and can be toggled', async () => {
+  const { setSetting } = await import('./gameStore.mjs')
+  let state = createInitialGameState()
+  assert.equal(state.settings.sound, true)
+  assert.equal(state.settings.reduceMotion, false)
+  state = setSetting(state, 'sound', false)
+  state = setSetting(state, 'reduceMotion', true)
+  assert.deepEqual(state.settings, { sound:false, reduceMotion:true })
+})

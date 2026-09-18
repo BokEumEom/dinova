@@ -13,6 +13,7 @@ export function createInitialGameState() {
     totalFocusMinutes: 0,
     completedSessions: 0,
     streakDays: 0,
+    settings: { sound: true, reduceMotion: false },
     session: {
       status: 'idle',
       startedAt: null,
@@ -117,6 +118,11 @@ export function selectCreature(state, id) {
   return { ...state, activeCreatureId: id, previewProgress: null }
 }
 
+export function setSetting(state, key, value) {
+  if (!(key in state.settings)) return state
+  return { ...state, settings: { ...state.settings, [key]: value } }
+}
+
 export function loadGameState(storage = globalThis.localStorage) {
   const initial = createInitialGameState()
   if (!storage) return initial
@@ -129,6 +135,7 @@ export function loadGameState(storage = globalThis.localStorage) {
       ...parsed,
       progress: { ...initial.progress, ...(parsed.progress ?? {}) },
       revivedIds: (parsed.revivedIds ?? []).filter((id) => CREATURE_BY_ID[id]),
+      settings: { ...initial.settings, ...(parsed.settings ?? {}) },
       session: { ...initial.session, ...(parsed.session ?? {}) },
     }
   } catch {
