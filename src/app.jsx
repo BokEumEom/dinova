@@ -8,6 +8,10 @@ import {
 
 const ASSETS = {
   brachiosaurus: '/assets/brachiosaurus-master.webp',
+  triceratops: '/assets/triceratops.webp',
+  stegosaurus: '/assets/stegosaurus.webp',
+  'tyrannosaurus-rex': '/assets/tyrannosaurus-rex.webp',
+  ankylosaurus: '/assets/ankylosaurus.webp',
 }
 
 const NAV = [
@@ -153,7 +157,7 @@ function CollectionScreen({ game, update, goMelTime }) {
       const revived = game.revivedIds.includes(creature.id)
       const asset = ASSETS[creature.id]
       return <button key={creature.id} className={`collection-card ${game.activeCreatureId===creature.id?'selected-creature':''}`} onClick={() => choose(creature.id)}>
-        <div className={`asset-box ${!revived && p === 0 ? 'locked' : ''}`}>{asset ? <img src={asset} alt={creature.name}/> : <div className="silhouette-shape">{creature.name[0]}</div>}{revived && <span className="revived-mark">✓</span>}{!revived && p===0 && <span className="lock-mark">◇</span>}</div>
+        <div className={`asset-box ${!revived && p === 0 ? 'locked' : ''}`}>{asset ? <img src={asset} alt={creature.name} loading="lazy"/> : <div className="silhouette-shape">{creature.name[0]}</div>}{revived && <span className="revived-mark">✓</span>}{!revived && p===0 && <span className="lock-mark">◇</span>}</div>
         <div className="collection-copy"><strong>{p>0 || revived ? creature.name : '???'}</strong><span>{revived ? 'Revived' : p>0 ? `${Math.round(p*100)}% awake` : creature.rarity}</span></div>
         {p>0 && !revived && <div className="mini-progress"><i style={{width:percent(p)}} /></div>}
       </button>
@@ -183,7 +187,7 @@ function ProfileScreen({ game }) {
   const stats = [['Total focus',`${game.totalFocusMinutes}m`,'◷'],['Sessions',game.completedSessions,'▶'],['Revived',`${game.revivedIds.length}/${CREATURES.length}`,'◇'],['Current streak',`${game.streakDays}d`,'⌁'],['Longest focus',`${game.completedSessions ? game.selectedDurationMinutes : 0}m`,'△'],['Maps unlocked','1/5','▱']]
   return <section className="screen profile-screen">
     <BrandHeader title="Explorer" subtitle="오늘도, 조금 더 멋진 세계를 위해." right={<button className="settings-button">⚙</button>} />
-    <div className="profile-hero"><div className="avatar-ring"><img src="/assets/brachiosaurus-master.webp" alt="Brachiosaurus companion"/></div><div><span>DINOVA EXPLORER</span><strong>Focus Keeper</strong><p>Focus today. Revive the past.</p></div></div>
+    <div className="profile-hero"><div className="avatar-ring"><img src={ASSETS[game.activeCreatureId] || ASSETS.brachiosaurus} alt={`${CREATURE_BY_ID[game.activeCreatureId]?.name || 'Brachiosaurus'} companion`}/></div><div><span>DINOVA EXPLORER</span><strong>Focus Keeper</strong><p>Focus today. Revive the past.</p></div></div>
     <div className="stats-grid">{stats.map(([label,value,icon]) => <div className="stat-card" key={label}><span className="stat-icon">{icon}</span><div><small>{label}</small><strong>{value}</strong></div></div>)}</div>
     <div className="achievement-card"><div className="card-title-row"><strong>Achievements</strong><span>0 / 8</span></div><div className="badges"><div>◷<span>First Focus</span></div><div>◇<span>First Revival</span></div><div>△<span>Deep Focus</span></div><div>▱<span>Explorer</span></div></div></div>
     <blockquote>“집중한 시간은 사라지지 않습니다. 이 세계의 한 조각이 됩니다.”</blockquote>
