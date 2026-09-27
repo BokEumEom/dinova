@@ -1,10 +1,83 @@
 """Build the same 18 volumetric dinosaur assets used by focus, thumbnails and park."""
 from pathlib import Path
-import bpy, math
+import bpy, math, sys
 ROOT=Path(__file__).resolve().parent.parent
 source=(ROOT/'tools/build_models.py').read_text(encoding='utf-8')
 exec(source.split("for kind,base in [")[0])
 kinds=['brachiosaurus','triceratops','stegosaurus','tyrannosaurus','ankylosaurus','pteranodon','parasaurolophus','velociraptor','spinosaurus','pachycephalosaurus','dilophosaurus','styracosaurus','carnotaurus','therizinosaurus','corythosaurus','kentrosaurus','amargasaurus','iguanodon']
+
+def section_mesh(name,rings,sides=10,ivory_when=None):
+    """A continuous faceted volume, so the neck and feet do not look like pipes."""
+    verts=[];faces=[]
+    for cx,cy,cz,rx,ry in rings:
+        for i in range(sides):
+            a=math.tau*i/sides
+            verts.append((cx+math.cos(a)*rx,cy+math.sin(a)*ry,cz))
+    faces.append(tuple(reversed(range(sides))))
+    for j in range(len(rings)-1):
+        for i in range(sides):
+            a=j*sides+i;b=j*sides+(i+1)%sides
+            faces.append((a,b,b+sides,a+sides))
+    faces.append(tuple((len(rings)-1)*sides+i for i in range(sides)))
+    me=bpy.data.meshes.new(name);me.from_pydata(verts,[],faces);me.update()
+    ob=bpy.data.objects.new(name,me);bpy.context.collection.objects.link(ob);finish(ob,name)
+    if ivory_when:
+        ob.data.materials.append(cream);ivory_index=len(ob.data.materials)-1
+        for face in me.polygons:
+            if face.index==0 or face.index==len(me.polygons)-1:continue
+            sector=(face.index-1)%sides
+            if ivory_when(sector,sides,face.index):face.material_index=ivory_index
+    return ob
+
+def tail_mesh(rings,sides=10):
+    verts=[];faces=[]
+    for x,y,z,ry,rz in rings:
+        for i in range(sides):
+            a=math.tau*i/sides
+            verts.append((x,y+math.cos(a)*ry,z+math.sin(a)*rz))
+    faces.append(tuple(reversed(range(sides))))
+    for j in range(len(rings)-1):
+        for i in range(sides):
+            a=j*sides+i;b=j*sides+(i+1)%sides
+            faces.append((a,b,b+sides,a+sides))
+    faces.append(tuple((len(rings)-1)*sides+i for i in range(sides)))
+    me=bpy.data.meshes.new('Tapered_tail');me.from_pydata(verts,[],faces);me.update()
+    ob=bpy.data.objects.new('Tapered_tail',me);bpy.context.collection.objects.link(ob)
+    finish(ob,'Tapered_tail');me.materials.append(cream)
+    for face in me.polygons:
+        if face.index not in (0,len(me.polygons)-1) and math.sin(math.tau*((face.index-1)%sides+.5)/sides)<-.2:
+            face.material_index=len(me.materials)-1
+    return ob
+
+def reference_brachiosaurus():
+    # Silhouette measured from the supplied isolated mint dinosaur: high narrow
+    # neck, modest head, full shoulder, four broad feet and a level pointed tail.
+    ico('Body',(0,0,1.12),(1.00,.52,.66))
+    ico('Ivory belly',(-.12,0,.79),(.80,.48,.33),cream)
+    for x in [-.62,.63]:
+        for y in [-.34,.34]:
+            stance=-.10 if x<0 else .08
+            section_mesh('Rounded_leg',[(x+.08,y,1.42,.37,.31),(x,y,1.04,.32,.27),
+              (x+stance,y,.50,.255,.23),(x+stance-.06,y,.19,.27,.24),
+              (x+stance-.13,y,.10,.32,.27)])
+            for offset in [-.15,0,.15]:
+                ico('Ivory toe',(x+stance-.43,y+offset,.10),(.082,.073,.105),cream,1)
+    neck=[(-.55,0,.86,.52,.35),(-.64,0,1.20,.42,.31),(-.77,0,1.60,.34,.27),
+          (-.87,0,2.03,.28,.23),(-.98,0,2.48,.23,.21),(-1.07,0,2.96,.205,.19),
+          (-1.12,0,3.25,.215,.20)]
+    # Ivory wraps around the forward quadrant of the neck, matching the long
+    # pale chest panel in the original artwork from either side view.
+    section_mesh('Curved neck',neck,12,lambda i,n,f: 5<=i<=8)
+    ico('Head',(-1.18,0,3.36),(.33,.275,.28))
+    ico('Soft snout',(-1.43,0,3.31),(.31,.255,.185))
+    ico('Lower jaw',(-1.42,0,3.17),(.26,.225,.085),cream)
+    eye(-1.20,3.43,.265)
+    for side in [-1,1]:
+        tube('Smile',[(-1.66,side*.16,3.225),(-1.50,side*.239,3.19),(-1.34,side*.258,3.22)],
+             [.009,.011,.008],dark,5)
+    tail=[(.64,0,1.14,.40,.34),(.96,0,1.04,.32,.26),(1.32,0,.93,.23,.20),
+          (1.67,0,.85,.14,.13),(2.02,0,.87,.05,.05),(2.24,0,.92,.008,.008)]
+    tail_mesh(tail)
 
 def biped(kind):
     ico('Body',(0,0,1.27),(.62,.43,.86))
@@ -74,9 +147,13 @@ def flying():
         tube('Leg',[(.08,side*.15,.88),(.25,side*.24,.50)],[.10,.07])
         ico('Foot',(.16,side*.25,.45),(.18,.12,.09))
 
+selected_kind=sys.argv[sys.argv.index('--species')+1] if '--species' in sys.argv else None
+if selected_kind and selected_kind not in kinds:raise ValueError(f'Unknown species: {selected_kind}')
 for kind in kinds:
+    if selected_kind and kind!=selected_kind:continue
     bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
-    if kind in ['brachiosaurus','amargasaurus']:build('brachiosaurus');variant(kind)
+    if kind=='brachiosaurus':reference_brachiosaurus()
+    elif kind=='amargasaurus':build('brachiosaurus');variant(kind)
     elif kind=='parasaurolophus':
         build('brachiosaurus')
         # Same friendly quadruped proportions as reference 09, with a swept crest.

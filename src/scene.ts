@@ -13,6 +13,7 @@ export class IceScene {
   private controls:OrbitControls;
   private ice=new THREE.Group();
   private dinosaur:THREE.Group|null=null;
+  private dinosaurColors:Array<{material:THREE.MeshStandardMaterial;color:THREE.Color}>=[];
   private cap:THREE.Mesh;
   private clip=new THREE.Plane(new THREE.Vector3(0,-1,0),4);
   private observer:ResizeObserver;
@@ -47,21 +48,26 @@ export class IceScene {
     for(const [x,y,z,s] of [[-2.05,.03,.3,.33],[1.97,.02,.1,.35],[-2.6,.04,-.7,.25],[2.5,.02,-1,.4],[-1.8,0,1,.20]]){
       const chunk=new THREE.Mesh(new THREE.IcosahedronGeometry(s,0),new THREE.MeshBasicMaterial({color:0xe5f8ff,transparent:true,opacity:.75}));chunk.position.set(x,y,z);chunk.scale.y=.7;this.scene.add(chunk);
     }
-    const tasks=[loadDinosaur(id).then(model=>{if(this.disposed){dispose3D(model);return;}this.dinosaur=model;model.rotation.y=.52;model.position.y=.12;this.scene.add(model);host.dataset.model=model.userData.species;}),new GLTFLoader().loadAsync('/models/reference-ice.glb').then(gltf=>{
+    const tasks=[loadDinosaur(id).then(model=>{if(this.disposed){dispose3D(model);return;}this.dinosaur=model;model.rotation.y=.52;model.position.y=.12;model.traverse(o=>{if(o instanceof THREE.Mesh){for(const material of Array.isArray(o.material)?o.material:[o.material]){if(material instanceof THREE.MeshStandardMaterial)this.dinosaurColors.push({material,color:material.color.clone()});}}});this.scene.add(model);this.setMelt(this.progress);host.dataset.model=model.userData.species;}),new GLTFLoader().loadAsync('/models/reference-ice.glb').then(gltf=>{
       if(this.disposed){this.release(gltf.scene);return;}
-      gltf.scene.traverse(obj=>{if(obj instanceof THREE.Mesh){const old=obj.material as THREE.MeshStandardMaterial;const fissure=old.name.includes('fractured');const replacement=new THREE.MeshBasicMaterial({color:fissure?0xf7ffff:[0xa3dbe9,0xdaf7ff,0xf1fcff,0x8fc9df,0xb5e4f0][Number(old.name.match(/\d+/)?.[0]??0)%5],transparent:true,opacity:fissure?.82:Math.max(.34,old.opacity*1.35),side:THREE.FrontSide,depthWrite:false,clippingPlanes:[this.clip]});old.dispose();obj.material=replacement;obj.renderOrder=fissure?7:5;}});
+      gltf.scene.traverse(obj=>{if(obj instanceof THREE.Mesh){const old=obj.material as THREE.MeshStandardMaterial;const fissure=/fractur|frost|ridge|edge/i.test(old.name);const replacement=fissure?new THREE.MeshBasicMaterial({color:0xf0fcff,transparent:true,opacity:.84,side:THREE.DoubleSide,depthWrite:false,clippingPlanes:[this.clip]}):new THREE.MeshPhongMaterial({color:[0xa8d2de,0xc3e3eb,0xd9f0f4,0xb4d7e3,0xcce6ee][Number(old.name.match(/\d+/)?.[0]??0)%5],specular:0xffffff,shininess:68,flatShading:true,transparent:true,opacity:.65,side:THREE.DoubleSide,depthWrite:false,clippingPlanes:[this.clip]});old.dispose();obj.material=replacement;obj.renderOrder=fissure?7:5;}});
       this.ice.add(gltf.scene);this.setMelt(this.progress);
     })];
     Promise.all(tasks).then(()=>{if(!this.disposed)host.dataset.loaded='true';}).catch(()=>{if(!this.disposed){host.dataset.loaded='error';host.insertAdjacentHTML('beforeend',`<p class="scene-error">${translate('sceneError',lang)}</p>`);}});
     this.observer=new ResizeObserver(()=>this.resize());this.observer.observe(host);this.resize();this.animate();
   }
   setMotion(motion:boolean){this.reduced=!motion;}
-  setMelt(percent:number){this.progress=percent;const p=THREE.MathUtils.clamp(percent/100,0,1),height=3.46*(1-p);this.clip.constant=height;this.ice.visible=p<.998;this.cap.visible=p>.005&&p<.998;this.cap.position.y=height;this.cap.scale.set(1.12+p*.48,.65+p*.22,1);}
+  setMelt(percent:number){this.progress=percent;const p=THREE.MathUtils.clamp(percent/100,0,1),height=3.46*(1-p);this.clip.constant=height;this.ice.visible=p<.998;this.cap.visible=p>.005&&p<.998;this.cap.position.y=height;this.cap.scale.set(1.12+p*.48,.65+p*.22,1);
+    // The reference shows a quiet blue silhouette inside opaque ice. Keep the
+    // shared GLB intact and restore its original colors as the ice recedes.
+    const tint=new THREE.Color(0x607c8a),amount=Math.pow(1-p,.7)*.86;
+    for(const entry of this.dinosaurColors)entry.material.color.copy(entry.color).lerp(tint,amount);
+  }
   setAngle(value:number){this.camera.position.set(Math.sin(value*.009)*8.4,this.camera.position.y,Math.cos(value*.009)*8.4);this.controls.update();}
   setElevation(value:number){this.camera.position.y=1.5+(value/100)*2.0;this.controls.update();}
   reset(){this.camera.position.set(.3,2.00,8.4);this.controls.target.set(0,1.72,0);this.controls.update();}
   private resize(){const{width,height}=this.host.getBoundingClientRect();if(!width||!height)return;this.camera.aspect=width/height;this.camera.updateProjectionMatrix();this.renderer.setSize(width,height);}
-  private animate=()=>{this.frame=requestAnimationFrame(this.animate);const t=this.clock.getElapsedTime();if(this.dinosaur&&!this.reduced)animateDinosaur(this.dinosaur,t,this.progress>=99?'idle':'sleep');this.controls.update();this.renderer.render(this.scene,this.camera);};
+  private animate=()=>{this.frame=requestAnimationFrame(this.animate);const t=this.clock.getElapsedTime();if(this.dinosaur){if(!this.reduced)animateDinosaur(this.dinosaur,t,'idle');const size=.74+.26*THREE.MathUtils.clamp(this.progress/100,0,1);this.dinosaur.scale.set(size,(this.reduced?1:this.dinosaur.scale.y)*size,size);}this.controls.update();this.renderer.render(this.scene,this.camera);};
   private release(root:THREE.Object3D){root.traverse(obj=>{if(obj instanceof THREE.Mesh||obj instanceof THREE.Sprite){if(obj instanceof THREE.Mesh)obj.geometry.dispose();const materials=Array.isArray(obj.material)?obj.material:[obj.material];materials.forEach(m=>{if('map'in m)(m.map as THREE.Texture|null)?.dispose();m.dispose();});}});}
   dispose(){this.disposed=true;cancelAnimationFrame(this.frame);this.observer.disconnect();this.controls.dispose();this.release(this.scene);this.renderer.dispose();this.renderer.domElement.remove();}
 }

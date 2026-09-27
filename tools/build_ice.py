@@ -12,13 +12,16 @@ def mat(name,color,alpha):
 glass=[mat('Ice facet '+str(i),c,a) for i,(c,a) in enumerate([((.63,.85,.93),.30),((.82,.96,1),.24),((.92,.99,1),.40),((.60,.83,.92),.24),((.76,.92,.98),.22)])]
 frost=mat('White fractured edges',(.95,1,1),.76)
 # Four irregular octagonal layers: a broad uneven base, a narrower slanted crown.
-rings=[(-1.65,1.64,-.91,.83,0),(-1.47,1.51,-.86,.80,1.14),(-1.33,1.34,-.78,.75,2.18),(-1.16,1.06,-.62,.62,3.40)]
+rings=[(-1.70,1.66,-.94,.87,0),(-1.50,1.54,-.87,.82,1.14),(-1.32,1.39,-.79,.76,2.18),(-1.14,1.08,-.64,.65,3.40)]
 verts=[]
 for layer,(left,right,front,back,z) in enumerate(rings):
  bevel=.15 if layer<3 else .12
  for i,(x,y) in enumerate([(left+bevel,front),(right-bevel,front),(right,front+bevel),(right,back-bevel),(right-bevel,back),(left+bevel,back),(left,back-bevel),(left,front+bevel)]):
-  dz=(random.random()-.5)*(.12 if layer==3 else .045)
-  verts.append((x,y,max(0,z+dz)))
+  # The reference crown is chipped and tilted, not a flat horizontal lid.
+  dz=([-.10,.025,.06,-.02,-.13,.05,-.17,-.09][i] if layer==3 else (random.random()-.5)*.09)
+  dx=([-.02,.03,.08,.01,-.07,-.06,.02,-.04][i] if layer==3 else 0)
+  dy=([-.04,-.02,.05,.07,.03,-.04,-.06,.02][i] if layer==3 else 0)
+  verts.append((x+dx,y+dy,max(0,z+dz)))
 faces=[]
 for l in range(3):
  for i in range(8):

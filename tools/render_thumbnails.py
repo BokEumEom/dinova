@@ -1,10 +1,13 @@
-import bpy, math
+import bpy, math, sys
 from pathlib import Path
 from mathutils import Vector
 ROOT=Path(__file__).resolve().parent.parent
 ids=['brachiosaurus','triceratops','stegosaurus','tyrannosaurus','ankylosaurus','pteranodon','parasaurolophus','velociraptor','spinosaurus','pachycephalosaurus','dilophosaurus','styracosaurus','carnotaurus','therizinosaurus','corythosaurus','kentrosaurus','amargasaurus','iguanodon']
 out=ROOT/'public/models/thumbs';out.mkdir(exist_ok=True)
+selected_name=sys.argv[sys.argv.index('--species')+1] if '--species' in sys.argv else None
+if selected_name and selected_name not in ids:raise ValueError(f'Unknown species: {selected_name}')
 for name in ids:
+ if selected_name and name!=selected_name:continue
  bpy.ops.wm.open_mainfile(filepath=str(ROOT/'public/models'/f'{name}.blend'))
  points=[o.matrix_world@Vector(p) for o in bpy.context.scene.objects if o.type=='MESH' for p in o.bound_box]
  low=Vector([min(p[i] for p in points) for i in range(3)]);high=Vector([max(p[i] for p in points) for i in range(3)]);center=(low+high)*.5

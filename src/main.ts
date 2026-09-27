@@ -78,7 +78,7 @@ function action(key:string){
   if(key==='sound')void sound();
   if(key==='choose')location.hash='collection';
   if(key==='edit'){editing=!editing;render();}
-  if(key==='demo'){demo=true;demoPlacements=[{uid:guid(),kind:'dino',asset:0,x:36,y:49,scale:1.05,flip:false},{uid:guid(),kind:'dino',asset:1,x:29,y:60,scale:1,flip:true},{uid:guid(),kind:'dino',asset:2,x:58,y:56,scale:1,flip:false},{uid:guid(),kind:'dino',asset:3,x:50,y:69,scale:1,flip:false}];selected=null;editing=false;render();}
+  if(key==='demo'){demo=true;demoPlacements=[{uid:guid(),kind:'dino',asset:0,x:29,y:65,scale:1,flip:false},{uid:guid(),kind:'dino',asset:1,x:48,y:71,scale:1,flip:true},{uid:guid(),kind:'dino',asset:2,x:67,y:55,scale:1,flip:false},{uid:guid(),kind:'dino',asset:3,x:78,y:38,scale:1,flip:false}];selected=null;editing=false;render();}
   if(key==='exit-demo'){demo=false;demoPlacements=[];selected=null;editing=false;render();}
 }
 let lastTimerLabel='';
