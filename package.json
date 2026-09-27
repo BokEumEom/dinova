@@ -1,23 +1,22 @@
 {
-  "name": "dinova-react-web",
+  "name": "melttime",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.2.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "test": "node --test src/**/*.test.mjs",
-    "check": "node --check src/domain/focus.mjs && node --check src/store/gameStore.mjs && node --check src/data/modelAssets.mjs && node --check src/three/modelLoader.js && node --check src/three/scenes.js",
-    "prebuild": "npm test && npm run check"
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
+    "@rive-app/canvas": "^2.42.2",
+    "lucide": "^0.468.0",
     "three": "^0.180.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^5.0.2",
-    "vite": "^7.1.5"
+    "@types/three": "^0.180.0",
+    "typescript": "^5.9.0",
+    "vite": "^7.1.0"
   }
 }

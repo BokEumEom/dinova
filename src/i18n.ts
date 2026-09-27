@@ -1,0 +1,33 @@
+import type {Language} from './catalog';
+const copy={
+  unknown:['아직 발견하지 못한 공룡','Undiscovered dinosaur'],orbitHint:['드래그로 회전 · 두 손가락으로 확대','Drag to orbit · Pinch to zoom'],
+  idle:['쉬기','Rest'],walk:['걷기','Walk'],look:['둘러보기','Look around'],eat:['먹이 주기','Feed'],happy:['쓰다듬기','Pet'],sleep:['재우기','Sleep'],interactHint:['친구를 눌러 함께 놀아 보세요.','Tap a friend to play together.'],
+  focus:['집중','Focus'],collection:['컬렉션','Collection'],garden:['꾸미기','Garden'],profile:['기록','Profile'],settings:['설정','Settings'],close:['닫기','Close'],back:['뒤로','Back'],
+  focusHint:['조금씩 집중하고, 새로운 친구를 만나요.','A little focus. A new friend.'],left:['왼쪽','Left'],right:['오른쪽','Right'],down:['아래','Down'],up:['위','Up'],
+  preview:['해동 미리보기','Melt preview'],previewHint:['얼음이 녹으면 어떤 모습일까요?','See your friend as the ice melts.'],previewOnly:['미리보기 · 기록에 반영되지 않아요','Preview only · not saved'],live:['실제 진행으로','Back to live'],
+  start:['집중 시작','Start focusing'],pause:['잠시 쉬기','Pause'],resume:['이어서 집중','Continue'],reset:['다시 시작','Reset'],together:['함께 집중하고, 함께 깨어나요.','Stay focused. Melt together.'],min:['분','min'],
+  sleeping:['얼음 속에서 기다리고 있어요','Sleeping in the ice'],melting:['조금씩 깨어나는 중이에요','A little closer to waking up'],almost:['곧 만날 수 있어요!','Almost ready to meet you!'],melted:['해동','melted'],choose:['다른 친구 선택','Choose a friend'],
+  all:['전체','All'],group1:['첫 번째 친구들','First friends'],group2:['새로운 만남','New encounters'],group3:['특별한 친구들','Special friends'],found:['해동 완료','Revived'],frozen:['얼음 속','In the ice'],
+  collectionHint:['당신의 집중으로 깨어나는 18명의 친구들','18 little friends, awakened by your focus'],revive:['이 친구 해동하기','Revive this friend'],focusTogether:['함께 집중하기','Focus together'],
+  dinoHint:['집중 시간을 완료하면 얼음이 녹고 친구가 깨어나요. 정원에 배치해 함께 지낼 수 있어요.','Complete a focus session to melt the ice and wake this friend. Then give them a home in your garden.'],
+  sameArt:['모든 화면에서 같은 공룡 원화를 사용해요.','The same original artwork, everywhere.'],plant:['초식','Herbivore'],meat:['육식','Carnivore'],fish:['물고기를 좋아해요','Fish eater'],jurassic:['쥐라기','Jurassic'],cretaceous:['백악기','Cretaceous'],
+  gardenTitle:['나의 공룡 정원','My dinosaur garden'],gardenHint:['깨어난 친구들에게 집을 만들어 주세요.','A little home for your awakened friends.'],meadow:['초록빛 초원','Green meadow'],saved:['자동 저장됨','Saved automatically'],
+  dinosaurs:['공룡','Dinosaurs'],decorations:['장식','Decorations'],edit:['배치 편집','Arrange'],done:['완료','Done'],moveHint:['꾹 누르고 끌어서 위치를 바꿔요.','Drag a friend or decoration to move it.'],
+  selectHint:['친구나 장식을 선택해서 배치해 보세요.','Choose a friend or decoration to place.'],emptyGarden:['정원이 첫 번째 친구를 기다려요.','Your garden is waiting for its first friend.'],
+  emptyHint:['집중으로 공룡을 해동한 뒤 여기에 배치해 주세요.','Revive a dinosaur through focus, then place it here.'],tryGarden:['정원 미리 체험','Try a garden preview'],exitDemo:['체험 끝내기','Exit preview'],demo:['체험 중 · 저장되지 않아요','Preview · not saved'],
+  lockedHint:['아직 얼음 속에 있어요. 먼저 해동해 주세요.','Still in the ice. Revive this friend first.'],placed:['정원에 있어요','In your garden'],place:['정원에 배치','Place in garden'],
+  remove:['정원에서 빼기','Remove'],flip:['방향 바꾸기','Flip'],bigger:['크게','Bigger'],smaller:['작게','Smaller'],move:['이동','Move'],gardenLimit:['정원에는 최대 24개를 배치할 수 있어요.','Your garden can hold up to 24 items.'],
+  hello:['만나서 반가워요!','Hello, little friend!'],complete:['집중을 완료했어요','A moment well spent'],completeHint:['당신의 소중한 시간으로 새로운 친구가 깨어났어요.','Your quiet focus has brought a little friend back to life.'],completeAgain:['오늘도 나를 위한 시간을 만들었어요.','Another quiet moment, just for you.'],
+  continue:['계속하기','Continue'],cancel:['취소','Cancel'],confirm:['확인','Confirm'],resetTitle:['새롭게 시작할까요?','Start a fresh moment?'],resetHint:['현재 세션의 진행이 초기화돼요. 수집한 공룡과 완료 기록은 유지됩니다.','This resets the current session. Your collection and completed records stay safe.'],
+  profileTitle:['나의 기록','My journey'],explorer:['얼음 탐험가','Ice explorer'],profileHint:['조금 더 차분한 마음, 조금 더 빛나는 내일.','A calmer mind for a brighter tomorrow.'],totalTime:['총 집중 시간','Total focus'],sessions:['완료한 집중','Sessions'],revived:['깨어난 친구','Friends revived'],streak:['연속 집중','Current streak'],longest:['가장 긴 집중','Longest focus'],placedCount:['정원의 친구','Garden friends'],days:['일','days'],times:['회','sessions'],friends:['마리','friends'],
+  achievements:['작은 성취들','Achievements'],firstStep:['첫 발자국','First step'],firstStepHint:['첫 집중 완료','Complete a session'],deepFocus:['깊은 집중','Deep focus'],deepFocusHint:['25분 이상 집중','Focus for 25 minutes'],newFriend:['새로운 친구','New friend'],newFriendHint:['첫 공룡 해동','Revive a dinosaur'],gardener:['정원사','Gardener'],gardenerHint:['친구를 정원에 배치','Place your first friend'],
+  week:['이번 주의 집중','Your week of focus'],recent:['최근 집중 기록','Recent moments'],noHistory:['첫 번째 집중 기록을 기다리고 있어요.','Your first quiet moment is waiting.'],today:['오늘','Today'],
+  language:['언어','Language'],sound:['잔잔한 자연 소리','Gentle nature sounds'],motion:['공룡과 배경 애니메이션','Dinosaur & ambient motion'],storage:['집중 기록, 공룡 컬렉션과 정원은 이 브라우저에 저장됩니다. 다른 기기와 자동 동기화되지 않아요.','Your focus, collection and garden are stored in this browser. They do not sync across devices.'],
+  resetData:['모든 기록 초기화','Reset all data'],deleteTitle:['모든 기록을 지울까요?','Erase your journey?'],deleteHint:['집중 기록, 수집한 공룡과 정원 배치가 모두 삭제됩니다. 되돌릴 수 없어요.','This erases all focus records, revived friends and garden placements. This cannot be undone.'],
+  loading:['작은 세계를 준비하고 있어요…','Your little world is waking up…'],sceneError:['3D를 불러오지 못했어요. 새로고침해 주세요.','The 3D scene could not load. Please refresh.'],riveError:['애니메이션을 불러오지 못해 원화를 표시합니다.','Animation unavailable. Showing original artwork.'],
+  soundOn:['잔잔한 바람 소리가 함께합니다.','Gentle wind is playing.'],soundOff:['자연 소리를 껐어요.','Nature sounds off.'],soundError:['오디오를 재생하지 못했어요.','Could not play audio.'],saveError:['저장 공간을 사용할 수 없어 현재 탭에만 기록됩니다.','Storage unavailable. Changes last only in this tab.'],
+  rotateLabel:['좌우 시점 조절','Horizontal view'],tiltLabel:['상하 시점 조절','Vertical view'],previewLabel:['얼음 해동 미리보기','Ice melt preview'],viewReset:['시점 초기화','Reset view'],
+  sceneLabel:['얼음 속 공룡. 드래그해서 얼음의 각도를 바꿀 수 있어요.','Dinosaur in ice. Drag to turn the ice.'],collectedCount:['친구가 깨어났어요','friends revived'],
+} as const;
+export type Key=keyof typeof copy;
+export const translate=(key:Key,lang:Language)=>copy[key][lang==='ko'?0:1];
